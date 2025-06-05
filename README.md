@@ -1,6 +1,6 @@
 [このリポジトリ作成を通して再学習すること](#このリポジトリ作成を通して再学習すること)
 
-## [RecruiTrack Lite](./docs/lite.md)
+## [RecruiTrack Lite](docs/lite/lite.md)
 ※フルバージョンを作成すると時間がかかりすぎるので一旦最小構成で作成
 
 # 📁 RecruiTrack (recrui-track)
