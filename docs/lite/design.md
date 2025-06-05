@@ -331,3 +331,53 @@ docker-compose up -d --build
 
 ```
 
+```mermaid
+sequenceDiagram
+    participant U as ユーザー (ブラウザ)
+    participant F as Frontend (Next.js)
+    participant H as Hono (API サーバ)
+    participant D as Drizzle/SQLite (DB)
+
+    %%─── ToDo一覧取得 ────────────────────────────────────────────────
+    alt ToDo 一覧取得
+        U->>F: ページロード\nGET /api/todos
+        F->>H: GET /api/todos
+        H->>D: SELECT * FROM todos ORDER BY createdAt DESC
+        D-->>H: [{…}, {…}, …]
+        H-->>F: 200 OK [全 ToDo 配列]
+        F-->>U: ToDo 一覧を表示
+    end
+
+    %%─── ToDo 作成 ─────────────────────────────────────────────────
+    alt ToDo 作成
+        U->>F: フォーム送信\nPOST /api/todos { title }
+        F->>H: POST /api/todos { title }
+        H->>D: INSERT INTO todos (id, title, completed, createdAt, updatedAt) VALUES (...)
+        D-->>H: INSERT 成功
+        H-->>F: 201 Created { id }
+        F-->>U: 作成完了通知\n(ToDo 一覧を再取得 → GET /api/todos)
+    end
+
+    %%─── ToDo 更新 ─────────────────────────────────────────────────
+    alt ToDo 更新
+        U->>F: チェックボックス操作 or タイトル編集\nPUT /api/todos/:id { title, completed }
+        F->>H: PUT /api/todos/:id { title, completed }
+        H->>D: SELECT * FROM todos WHERE id = :id
+        D-->>H: { id, title, completed, createdAt, updatedAt }
+        H->>D: UPDATE todos SET title = ..., completed = ..., updatedAt = NOW() WHERE id = :id
+        D-->>H: UPDATE 成功
+        H-->>F: 200 OK { id }
+        F-->>U: 更新反映\n(ToDo 一覧を再取得 → GET /api/todos)
+    end
+
+    %%─── ToDo 削除 ─────────────────────────────────────────────────
+    alt ToDo 削除
+        U->>F: 削除ボタン押下\nDELETE /api/todos/:id
+        F->>H: DELETE /api/todos/:id
+        H->>D: DELETE FROM todos WHERE id = :id
+        D-->>H: DELETE 成功
+        H-->>F: 200 OK { message: "deleted" }
+        F-->>U: 削除反映\n(ToDo 一覧を再取得 → GET /api/todos)
+    end
+
+```
