@@ -2,3 +2,18 @@ local.db
 node_modules/
 dist/
 drizzle/
+
+# Node.js
+
+npm-debug.log*
+
+# TypeScript
+
+*.js
+*.d.ts
+
+# dotenv
+.env
+
+# VS Code
+.vscode/

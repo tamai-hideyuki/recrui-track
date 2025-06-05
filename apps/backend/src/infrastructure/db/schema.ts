@@ -1,10 +1,9 @@
-// @ts-ignore
-import { sqliteTable, text, integer, timestamp } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const todos = sqliteTable("todos", {
-    id: text("id").primaryKey(),
-    title: text("title").notNull(),
-    completed: integer("completed").notNull().default(0),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    id:         text("id").primaryKey(),
+    title:      text("title").notNull(),
+    completed:  integer("completed").notNull().default(0),
+    createdAt:  integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
+    updatedAt:  integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
 });
