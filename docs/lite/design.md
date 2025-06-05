@@ -330,7 +330,7 @@ docker-compose down
 docker-compose up -d --build
 
 ```
-
+## RecruiTrack Lite全体のシーケンス図
 ```mermaid
 sequenceDiagram
     participant U as ユーザー (ブラウザ)
