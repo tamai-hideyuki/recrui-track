@@ -3,10 +3,7 @@ import { db } from "../../infrastructure/db/db";
 import { todos } from "../../infrastructure/db/schema";
 import { Todo as TodoEntity } from "../../domain/entity/Todo";
 
-/**
- * Drizzle で取得した生データを
- * ドメインエンティティに復元するヘルパー
- */
+
 function toDomain(row: {
     id: string;
     title: string;
@@ -14,6 +11,7 @@ function toDomain(row: {
     created_at: Date;
     updated_at: Date;
 }): TodoEntity {
+    // ドメインエンティティに復元するヘルパー
     return TodoEntity.reconstruct({
         id: row.id,
         title: row.title,
@@ -30,46 +28,40 @@ export interface ITodoRepository {
     deleteById(id: string): Promise<void>;
 }
 
-export class TodoRepository implements TodoRepository {
-    /**
-     * 全件取得
-     */
+export class TodoRepository implements ITodoRepository {
     async findAll(): Promise<TodoEntity[]> {
-        const rows = await db.select({
-            id: todos.id,
-            title: todos.title,
-            completed: todos.completed,
-            created_at: todos.createdAt,
-            updated_at: todos.updatedAt,
-        }).from(todos);
-        return rows.map((row) => toDomain(row));
+        const rows = await db
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+            })
+            .from(todos);
+
+        return rows.map((r) => toDomain(r));
     }
 
-    /**
-     * ID で単一取得
-     */
     async findById(id: string): Promise<TodoEntity | null> {
-        const row = await db.select({
-            id: todos.id,
-            title: todos.title,
-            completed: todos.completed,
-            created_at: todos.createdAt,
-            updated_at: todos.updatedAt,
-        })
+        const rows = await db
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+            })
             .from(todos)
             .where(eq(todos.id, id))
             .limit(1);
 
-        if (row.length === 0) {
+        if (rows.length === 0) {
             return null;
         }
-        return toDomain(row[0]);
+        return toDomain(rows[0]);
     }
 
-    /**
-     * 挿入 or 更新
-     * ドメインエンティティを渡すと DB スキーマに合わせて upsert する
-     */
     async save(todo: TodoEntity): Promise<void> {
         const data = {
             id: todo.id,
@@ -79,15 +71,13 @@ export class TodoRepository implements TodoRepository {
             updatedAt: todo.updatedAt,
         };
 
-        // 既存レコードが存在すれば UPDATE、存在しなければ INSERT
-        const existing = await db.select({ count: todos.id.count().as("cnt") })
-            .from(todos)
-            .where(eq(todos.id, todo.id))
-            .limit(1);
-
-        if ((existing[0]?.cnt ?? 0) > 0) {
+        // ────────── ここが重要 ──────────
+        // いったん findById して、存在すれば UPDATE、いなければ INSERT
+        const existing = await this.findById(data.id);
+        if (existing) {
             // UPDATE
-            await db.update(todos)
+            await db
+                .update(todos)
                 .set({
                     title: data.title,
                     completed: data.completed,
@@ -106,9 +96,6 @@ export class TodoRepository implements TodoRepository {
         }
     }
 
-    /**
-     * ID を指定して削除
-     */
     async deleteById(id: string): Promise<void> {
         await db.delete(todos).where(eq(todos.id, id));
     }

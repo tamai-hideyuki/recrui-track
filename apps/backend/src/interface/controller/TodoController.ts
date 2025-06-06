@@ -172,7 +172,7 @@ export class TodoController {
             await repo.deleteById(id);
 
             // ③ 成功したら 204 No Content
-            return c.text("", { status: 204 });
+            return new Response(null, { status: 204 });
         } catch (err) {
             console.error("Failed to delete todo:", err);
             return c.json({ message: "Internal Server Error" }, 500);
