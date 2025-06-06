@@ -8,7 +8,7 @@ export type Todo = {
 
 
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
 
 export async function fetchTodos(): Promise<Todo[]> {
     const res = await fetch(`${BASE_URL}/api/todos`);

@@ -23,6 +23,6 @@ app.get("/", (c) => c.text("Hello RecruiTrack!"));
 
 app.all("*", (c) => c.text("404 - Page Not Found", 404));
 
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = Number(process.env.PORT ?? 3003);
 serve({ fetch: app.fetch, port: PORT });
 console.log(`Server is running on http://localhost:${PORT}`);

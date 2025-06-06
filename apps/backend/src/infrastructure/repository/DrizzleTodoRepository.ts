@@ -1,4 +1,3 @@
-import { ITodoRepository } from "../../domain/repository/ITodoRepository";
 import { Todo as TodoEntity } from "../../domain/entity/Todo";
 import { todos } from "../db/schema";
 import { db } from "../db/db";
@@ -16,10 +15,11 @@ function toDomain(row: {
         id: row.id,
         title: row.title,
         completed: row.completed as 0 | 1,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     });
 }
+
 
 export class DrizzleTodoRepository {
     /** 全件取得 */
@@ -61,32 +61,33 @@ export class DrizzleTodoRepository {
             id: todo.id,
             title: todo.title,
             completed: todo.completed ? 1 : 0,
-            createdAt: todo.createdAt,
-            updatedAt: todo.updatedAt,
+            createdAt: todo.createdAt.getTime(),
+            updatedAt: todo.updatedAt.getTime(),
         };
+
 
         // ★ いったん findById() して、存在チェックだけ行う ★
         const existing = await this.findById(data.id);
 
         if (existing) {
             // UPDATE
-            await db
-                .update(todos)
-                .set({
-                    title: data.title,
-                    completed: data.completed,
-                    updatedAt: data.updatedAt,
-                })
+            await db.update(todos).set({
+                title: data.title,
+                completed: data.completed,
+                updatedAt: new Date(data.updatedAt),
+            })
                 .where(eq(todos.id, data.id));
+
         } else {
             // INSERT
             await db.insert(todos).values({
                 id: data.id,
                 title: data.title,
                 completed: data.completed,
-                createdAt: data.createdAt,
-                updatedAt: data.updatedAt,
+                createdAt: new Date(data.createdAt),
+                updatedAt: new Date(data.updatedAt),
             });
+
         }
     }
 
