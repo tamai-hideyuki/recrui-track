@@ -14,10 +14,10 @@ export class TodoController {
      */
     static async getAll(c: Context) {
         try {
-            // ① ドメインエンティティ TodoEntity[] を取得
+            // ドメインエンティティ TodoEntity[] を取得
             const todos: TodoEntity[] = await repo.findAll();
 
-            // ② DTO にマッピング
+            // DTO にマッピング
             const result: TodoResponseDto[] = todos.map((t) => ({
                 id: t.id,
                 title: t.title,
@@ -26,7 +26,7 @@ export class TodoController {
                 updatedAt: t.updatedAt.toISOString(),
             }));
 
-            // ③ JSON レスポンスとして返却
+            // JSON レスポンスとして返却
             return c.json(result);
         } catch (err) {
             console.error("Failed to fetch todos:", err);
@@ -41,14 +41,14 @@ export class TodoController {
     static async getById(c: Context) {
         try {
             const id = c.req.param("id");
-            // ① ドメインエンティティを取得
+            // ドメインエンティティを取得
             const todoEntity = await repo.findById(id);
 
             if (!todoEntity) {
                 return c.json({ message: "Not Found" }, 404);
             }
 
-            // ② DTO にマッピング
+            // DTO にマッピング
             const dto: TodoResponseDto = {
                 id: todoEntity.id,
                 title: todoEntity.title,
@@ -57,7 +57,7 @@ export class TodoController {
                 updatedAt: todoEntity.updatedAt.toISOString(),
             };
 
-            // ③ JSON レスポンスとして返却
+            // JSON レスポンスとして返却
             return c.json(dto);
         } catch (err) {
             console.error(`Failed to fetch todo by id: ${err}`);
@@ -71,17 +71,17 @@ export class TodoController {
      */
     static async create(c: Context) {
         try {
-            // ① リクエストボディ（{ title: string }）を取得
+            // リクエストボディ（{ title: string }）を取得
             const body = (await c.req.json()) as { title: string };
 
-            // ② UUID を生成し、ドメインエンティティを作成
+            // UUID を生成し、ドメインエンティティを作成
             const id = uuidv4();
             const todoEntity = TodoEntity.createNew(id, body.title);
 
-            // ③ リポジトリに保存
+            // リポジトリに保存
             await repo.save(todoEntity);
 
-            // ④ 作成したエンティティを DTO にマッピングして返却（ステータス 201）
+            // 作成したエンティティを DTO にマッピングして返却（ステータス 201）
             return c.json(
                 {
                     id: todoEntity.id,
@@ -116,13 +116,13 @@ export class TodoController {
                 completed?: boolean;
             };
 
-            // ① 既存エンティティを取得
+            // 既存エンティティを取得
             const existing = await repo.findById(id);
             if (!existing) {
                 return c.json({ message: "Not Found" }, 404);
             }
 
-            // ② ドメインモデルのメソッドを用いて更新
+            // ドメインモデルのメソッドを用いて更新
             if (typeof body.title === "string") {
                 existing.changeTitle(body.title.trim());
             }
@@ -130,10 +130,10 @@ export class TodoController {
                 existing.complete();
             }
 
-            // ③ 更新後のエンティティを保存
+            // 更新後のエンティティを保存
             await repo.save(existing);
 
-            // ④ 更新後エンティティを DTO にマッピングして返却
+            // 更新後エンティティを DTO にマッピングして返却
             const dto: TodoResponseDto = {
                 id: existing.id,
                 title: existing.title,
@@ -145,7 +145,6 @@ export class TodoController {
         } catch (err) {
             console.error("Failed to update todo:", err);
 
-            // 例えばタイトル変更時のバリデーションエラーなどを 400 で返す
             if (err instanceof Error && err.message.includes("タイトル")) {
                 return c.json({ message: err.message }, 400);
             }
@@ -162,16 +161,16 @@ export class TodoController {
         try {
             const id = c.req.param("id");
 
-            // ① 既存エンティティを取得して存在確認
+            // 既存エンティティを取得して存在確認
             const existing = await repo.findById(id);
             if (!existing) {
                 return c.json({ message: "Not Found" }, 404);
             }
 
-            // ② 削除処理
+            // 削除処理
             await repo.deleteById(id);
 
-            // ③ 成功したら 204 No Content
+            // 成功したら 204 No Content
             return new Response(null, { status: 204 });
         } catch (err) {
             console.error("Failed to delete todo:", err);

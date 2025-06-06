@@ -1,8 +1,9 @@
-import { TodoController } from "../controller/TodoController";
 import { Hono } from "hono";
-const router = new Hono();
+import { TodoController } from "../controller/TodoController";
 
-// (1) 一覧取得
+export const router = new Hono();
+
+// (1) 全件取得
 router.get("/todos", (c) => {
     return TodoController.getAll(c);
 });
@@ -22,5 +23,3 @@ router.put("/todos/:id", (c) => {
 router.delete("/todos/:id", (c) => {
     return TodoController.deleteById(c);
 });
-
-export { router };
