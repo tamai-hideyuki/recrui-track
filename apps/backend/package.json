@@ -16,7 +16,8 @@
     "drizzle-kit": "^0.x.x",
     "drizzle-orm": "^0.44.x",
     "hono": "^4.x.x",
-    "nanoid": "^5.x.x"
+    "nanoid": "^5.x.x",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

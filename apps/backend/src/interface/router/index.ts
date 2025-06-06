@@ -1,10 +1,26 @@
-import { Hono } from "hono";
 import { TodoController } from "../controller/TodoController";
+import { Hono } from "hono";
+const router = new Hono();
 
-export const app = new Hono();
+// (1) 一覧取得
+router.get("/todos", (c) => {
+    return TodoController.getAll(c);
+});
+// (2) 単一取得
+router.get("/todos/:id", (c) => {
+    return TodoController.getById(c);
+});
+// (3) 新規作成
+router.post("/todos", (c) => {
+    return TodoController.create(c);
+});
+// (4) 更新
+router.put("/todos/:id", (c) => {
+    return TodoController.update(c);
+});
+// (5) 削除
+router.delete("/todos/:id", (c) => {
+    return TodoController.deleteById(c);
+});
 
-app.get("/api/todos", TodoController.getAll);
-app.get("/api/todos/:id", TodoController.getById);
-app.post("/api/todos", TodoController.create);
-app.put("/api/todos/:id", TodoController.update);
-app.delete("/api/todos/:id", TodoController.delete);
+export { router };

@@ -1,4 +1,4 @@
-import { Title } from "../value-object/Title";
+import { Title } from "../value-object/Title"; // ← 追加
 
 export class Todo {
     private _id: string;
@@ -58,9 +58,19 @@ export class Todo {
         this._updatedAt = new Date();
     }
 
-    public get id(): string { return this._id; }
-    public get title(): string { return this._title.value; }
-    public get completed(): boolean { return this._completed; }
-    public get createdAt(): Date { return this._createdAt; }
-    public get updatedAt(): Date { return this._updatedAt; }
+    public get id(): string {
+        return this._id;
+    }
+    public get title(): string {
+        return this._title.value;
+    }
+    public get completed(): boolean {
+        return this._completed;
+    }
+    public get createdAt(): Date {
+        return this._createdAt;
+    }
+    public get updatedAt(): Date {
+        return this._updatedAt;
+    }
 }
