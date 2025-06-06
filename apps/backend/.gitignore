@@ -4,7 +4,7 @@ dist/
 drizzle/
 
 # Node.js
-
+recrui-track.db
 npm-debug.log*
 
 # TypeScript
