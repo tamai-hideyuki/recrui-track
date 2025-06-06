@@ -15,5 +15,5 @@ apps/frontend/node_modules/
 apps/frontend/.next/
 
 
-create-backend-skeleton.sh
-create-frontend-skeleton.sh
+bin/create-backend-skeleton.sh
+bin/create-frontend-skeleton.sh

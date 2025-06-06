@@ -1,63 +1,98 @@
-import { ITodoRepository } from "../../domain/repository/ITodoRepository";
 import { Todo as TodoEntity } from "../../domain/entity/Todo";
 import { todos } from "../db/schema";
 import { db } from "../db/db";
 import { eq, desc } from "drizzle-orm";
 
-function mapRecordToEntity(record: {
+// Drizzle の行レコードをドメイン TodoEntity に変換するヘルパー
+function toDomain(row: {
     id: string;
     title: string;
     completed: number;
-    createdAt: Date;
-    updatedAt: Date;
+    created_at: Date;
+    updated_at: Date;
 }): TodoEntity {
     return TodoEntity.reconstruct({
-        id: record.id,
-        title: record.title,
-        completed: record.completed as 0 | 1,
-        createdAt: record.createdAt,
-        updatedAt: record.updatedAt,
+        id: row.id,
+        title: row.title,
+        completed: row.completed as 0 | 1,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
     });
 }
 
-export class DrizzleTodoRepository implements ITodoRepository {
-    public async findAll(): Promise<TodoEntity[]> {
+
+export class DrizzleTodoRepository {
+    /** 全件取得 */
+    async findAll(): Promise<TodoEntity[]> {
         const rows = await db
-        .select()
-        .from(todos)
-        .orderBy(desc(todos.createdAt));
-        return rows.map((r) => mapRecordToEntity(r));
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+            })
+            .from(todos);
+
+        return rows.map((r) => toDomain(r));
     }
 
-    public async findById(id: string): Promise<TodoEntity | null> {
-        const rows = await db.select().from(todos).where(eq(todos.id, id)).limit(1);
+    /** ID で単一取得 */
+    async findById(id: string): Promise<TodoEntity | null> {
+        const rows = await db
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+            })
+            .from(todos)
+            .where(eq(todos.id, id))
+            .limit(1);
+
         if (rows.length === 0) return null;
-        return mapRecordToEntity(rows[0]);
+        return toDomain(rows[0]);
     }
 
-    public async save(todo: TodoEntity): Promise<void> {
-        const existing = await this.findById(todo.id);
+    /** 挿入・更新（upsert） */
+    async save(todo: TodoEntity): Promise<void> {
+        const data = {
+            id: todo.id,
+            title: todo.title,
+            completed: todo.completed ? 1 : 0,
+            createdAt: todo.createdAt.getTime(),
+            updatedAt: todo.updatedAt.getTime(),
+        };
+
+
+        // ★ いったん findById() して、存在チェックだけ行う ★
+        const existing = await this.findById(data.id);
+
         if (existing) {
-            await db
-                .update(todos)
-                .set({
-                    title: todo.title,
-                    completed: todo.completed ? 1 : 0,
-                    updatedAt: new Date(),
-                })
-                .where(eq(todos.id, todo.id));
+            // UPDATE
+            await db.update(todos).set({
+                title: data.title,
+                completed: data.completed,
+                updatedAt: new Date(data.updatedAt),
+            })
+                .where(eq(todos.id, data.id));
+
         } else {
+            // INSERT
             await db.insert(todos).values({
-                id: todo.id,
-                title: todo.title,
-                completed: todo.completed ? 1 : 0,
-                createdAt: todo.createdAt,
-                updatedAt: todo.updatedAt,
+                id: data.id,
+                title: data.title,
+                completed: data.completed,
+                createdAt: new Date(data.createdAt),
+                updatedAt: new Date(data.updatedAt),
             });
+
         }
     }
 
-    public async deleteById(id: string): Promise<void> {
+    /** ID で削除 */
+    async deleteById(id: string): Promise<void> {
         await db.delete(todos).where(eq(todos.id, id));
     }
 }
