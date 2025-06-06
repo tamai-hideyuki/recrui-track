@@ -16,3 +16,4 @@ apps/frontend/.next/
 
 
 create-backend-skeleton.sh
+create-frontend-skeleton.sh
