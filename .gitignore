@@ -14,7 +14,3 @@ apps/backend/dist/
 apps/backend/drizzle/
 apps/frontend/node_modules/
 apps/frontend/.next/
-
-
-bin/create-backend-skeleton.sh
-bin/create-frontend-skeleton.sh
