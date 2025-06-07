@@ -1,0 +1,9 @@
+node_modules
+.yarn
+.yarnrc.yml
+.yarn/*
+!.yarn/plugins
+.yarnrc
+dist
+.next
+coverage
