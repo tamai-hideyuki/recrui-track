@@ -10,6 +10,7 @@ function toDomain(row: {
     completed: number;
     created_at: Date;
     updated_at: Date;
+    reminder_at: Date | null;
 }): TodoEntity {
     // ドメインエンティティに復元するヘルパー
     return TodoEntity.reconstruct({
@@ -18,6 +19,7 @@ function toDomain(row: {
         completed: row.completed as 0 | 1,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        reminderAt: row.reminder_at,
     });
 }
 
@@ -37,6 +39,7 @@ export class TodoRepository implements ITodoRepository {
                 completed: todos.completed,
                 created_at: todos.createdAt,
                 updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
             })
             .from(todos);
 
@@ -51,6 +54,7 @@ export class TodoRepository implements ITodoRepository {
                 completed: todos.completed,
                 created_at: todos.createdAt,
                 updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
             })
             .from(todos)
             .where(eq(todos.id, id))
@@ -69,9 +73,8 @@ export class TodoRepository implements ITodoRepository {
             completed: todo.completed ? 1 : 0,
             createdAt: todo.createdAt,
             updatedAt: todo.updatedAt,
+            reminderAt: todo.reminderAt,
         };
-
-        // ────────── ここが重要 ──────────
         // いったん findById して、存在すれば UPDATE、いなければ INSERT
         const existing = await this.findById(data.id);
         if (existing) {
@@ -82,6 +85,7 @@ export class TodoRepository implements ITodoRepository {
                     title: data.title,
                     completed: data.completed,
                     updatedAt: data.updatedAt,
+                    reminderAt: data.reminderAt,
                 })
                 .where(eq(todos.id, data.id));
         } else {
@@ -92,6 +96,7 @@ export class TodoRepository implements ITodoRepository {
                 completed: data.completed,
                 createdAt: data.createdAt,
                 updatedAt: data.updatedAt,
+                reminderAt: data.reminderAt,
             });
         }
     }
