@@ -1,25 +1,32 @@
-import { Todo as TodoEntity } from "../../domain/entity/Todo";
-import { todos } from "../db/schema";
+import { eq, and, gte, lt } from "drizzle-orm";
 import { db } from "../db/db";
-import { eq, desc } from "drizzle-orm";
+import { todos } from "../db/schema";
+import { Todo as TodoEntity } from "../../domain/entity/Todo";
 
-// Drizzle の行レコードをドメイン TodoEntity に変換するヘルパー
+// ドメイン変換ヘルパー
 function toDomain(row: {
     id: string;
     title: string;
     completed: number;
     created_at: Date;
     updated_at: Date;
+    reminder_at: Date | null;
+    due_at: Date | null;
+    reminder_offset: number | null;
+    reminded: number;
 }): TodoEntity {
     return TodoEntity.reconstruct({
         id: row.id,
         title: row.title,
-        completed: row.completed as 0 | 1,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        completed: row.completed === 1,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        reminderAt: row.reminder_at,
+        dueAt: row.due_at,
+        reminderOffset: row.reminder_offset,
+        reminded: row.reminded === 1,
     });
 }
-
 
 export class DrizzleTodoRepository {
     /** 全件取得 */
@@ -31,14 +38,45 @@ export class DrizzleTodoRepository {
                 completed: todos.completed,
                 created_at: todos.createdAt,
                 updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
+                due_at: todos.dueAt,
+                reminder_offset: todos.reminderOffset,
+                reminded: todos.reminded,
             })
             .from(todos);
 
-        return rows.map((r) => toDomain(r));
+        return rows.map(toDomain);
     }
 
     /** ID で単一取得 */
     async findById(id: string): Promise<TodoEntity | null> {
+        const row = await db
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
+                due_at: todos.dueAt,
+                reminder_offset: todos.reminderOffset,
+                reminded: todos.reminded,
+            })
+            .from(todos)
+            .where(eq(todos.id, id))
+            .limit(1)
+            .then((rs) => rs[0] || null);
+
+        return row ? toDomain(row) : null;
+    }
+
+    /** 今日が〆切のものだけ取得 */
+    async findDueToday(): Promise<TodoEntity[]> {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+
         const rows = await db
             .select({
                 id: todos.id,
@@ -46,49 +84,93 @@ export class DrizzleTodoRepository {
                 completed: todos.completed,
                 created_at: todos.createdAt,
                 updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
+                due_at: todos.dueAt,
+                reminder_offset: todos.reminderOffset,
+                reminded: todos.reminded,
             })
             .from(todos)
-            .where(eq(todos.id, id))
-            .limit(1);
+            .where(
+                and(
+                    gte(todos.dueAt, start),
+                    lt(todos.dueAt, end)
+                )
+            );
 
-        if (rows.length === 0) return null;
-        return toDomain(rows[0]);
+        return rows.map(toDomain);
     }
 
-    /** 挿入・更新（upsert） */
-    async save(todo: TodoEntity): Promise<void> {
-        const data = {
-            id: todo.id,
-            title: todo.title,
-            completed: todo.completed ? 1 : 0,
-            createdAt: todo.createdAt.getTime(),
-            updatedAt: todo.updatedAt.getTime(),
-        };
+    /** 〆切を過ぎたものだけ取得 */
+    async findOverdue(): Promise<TodoEntity[]> {
+        const now = new Date();
 
-
-        // ★ いったん findById() して、存在チェックだけ行う ★
-        const existing = await this.findById(data.id);
-
-        if (existing) {
-            // UPDATE
-            await db.update(todos).set({
-                title: data.title,
-                completed: data.completed,
-                updatedAt: new Date(data.updatedAt),
+        const rows = await db
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
+                due_at: todos.dueAt,
+                reminder_offset: todos.reminderOffset,
+                reminded: todos.reminded,
             })
-                .where(eq(todos.id, data.id));
+            .from(todos)
+            .where(lt(todos.dueAt, now));
 
-        } else {
-            // INSERT
-            await db.insert(todos).values({
-                id: data.id,
-                title: data.title,
-                completed: data.completed,
-                createdAt: new Date(data.createdAt),
-                updatedAt: new Date(data.updatedAt),
+        return rows.map(toDomain);
+    }
+
+    /** これから先の〆切（今日以降）だけ取得 */
+    async findUpcoming(): Promise<TodoEntity[]> {
+        const now = new Date();
+
+        const rows = await db
+            .select({
+                id: todos.id,
+                title: todos.title,
+                completed: todos.completed,
+                created_at: todos.createdAt,
+                updated_at: todos.updatedAt,
+                reminder_at: todos.reminderAt,
+                due_at: todos.dueAt,
+                reminder_offset: todos.reminderOffset,
+                reminded: todos.reminded,
+            })
+            .from(todos)
+            .where(gte(todos.dueAt, now));
+
+        return rows.map(toDomain);
+    }
+
+    /** upsert */
+    async save(todo: TodoEntity): Promise<void> {
+        await db
+            .insert(todos)
+            .values({
+                id: todo.id,
+                title: todo.title,
+                completed: todo.completed ? 1 : 0,
+                createdAt: todo.createdAt,
+                updatedAt: todo.updatedAt,
+                reminderAt: todo.reminderAt,
+                dueAt: todo.dueAt,
+                reminderOffset: todo.reminderOffset,
+                reminded: todo.reminded ? 1 : 0,
+            })
+            .onConflictDoUpdate({
+                target: todos.id,
+                set: {
+                    title: todo.title,
+                    completed: todo.completed ? 1 : 0,
+                    updatedAt: todo.updatedAt,
+                    reminderAt: todo.reminderAt,
+                    dueAt: todo.dueAt,
+                    reminderOffset: todo.reminderOffset,
+                    reminded: todo.reminded ? 1 : 0,
+                },
             });
-
-        }
     }
 
     /** ID で削除 */

@@ -7,6 +7,9 @@ export class Todo {
     private _createdAt: Date;
     private _updatedAt: Date;
     private _reminderAt: Date | null;
+    private _dueAt: Date | null;
+    private _reminderOffset: number | null;
+    private _reminded: boolean;
 
     private constructor(
         id: string,
@@ -14,7 +17,10 @@ export class Todo {
         completed: boolean,
         createdAt: Date,
         updatedAt: Date,
-        reminderAt: Date | null
+        reminderAt: Date | null,
+        dueAt: Date | null,
+        reminderOffset: number | null,
+        reminded: boolean
     ) {
         this._id = id;
         this._title = title;
@@ -22,6 +28,9 @@ export class Todo {
         this._createdAt = createdAt;
         this._updatedAt = updatedAt;
         this._reminderAt = reminderAt;
+        this._dueAt = dueAt;
+        this._reminderOffset = reminderOffset;
+        this._reminded = reminded;
     }
 
     public static createNew(id: string, rawTitle: string): Todo {
@@ -33,26 +42,35 @@ export class Todo {
             false,
             now,
             now,
-            null
+            null,  // reminderAt
+            null,  // dueAt
+            null,  // reminderOffset
+            false  // reminded
         );
     }
 
     public static reconstruct(params: {
         id: string;
         title: string;
-        completed: 0 | 1;
+        completed: boolean;
         createdAt: Date;
         updatedAt: Date;
         reminderAt: Date | null;
+        dueAt: Date | null;
+        reminderOffset: number | null;
+        reminded: boolean;
     }): Todo {
         const title = Title.create(params.title);
         return new Todo(
             params.id,
             title,
-            params.completed === 1,
+            params.completed,
             params.createdAt,
             params.updatedAt,
-            params.reminderAt
+            params.reminderAt,
+            params.dueAt,
+            params.reminderOffset,
+            params.reminded
         );
     }
 
@@ -70,6 +88,32 @@ export class Todo {
         this._updatedAt = new Date();
     }
 
+    public changeReminder(reminder: Date | null): void {
+        this._reminderAt = reminder;
+        this._updatedAt = new Date();
+    }
+
+    public changeDue(due: Date | null): void {
+        this._dueAt = due;
+        this._updatedAt = new Date();
+    }
+
+    public changeReminderOffset(offset: number | null): void {
+        this._reminderOffset = offset;
+        this._updatedAt = new Date();
+    }
+
+    public markReminded(): void {
+        this._reminded = true;
+        this._updatedAt = new Date();
+    }
+
+    public unmarkReminded(): void {
+        this._reminded = false;
+        this._updatedAt = new Date();
+    }
+
+    // ———— getters ————
     public get id(): string {
         return this._id;
     }
@@ -88,8 +132,13 @@ export class Todo {
     public get reminderAt(): Date | null {
         return this._reminderAt;
     }
-    public changeReminder(reminder: Date | null): void {
-        this._reminderAt = reminder;
-        this._updatedAt = new Date();
+    public get dueAt(): Date | null {
+        return this._dueAt;
+    }
+    public get reminderOffset(): number | null {
+        return this._reminderOffset;
+    }
+    public get reminded(): boolean {
+        return this._reminded;
     }
 }

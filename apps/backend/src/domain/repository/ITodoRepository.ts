@@ -1,107 +1,76 @@
-import { eq } from "drizzle-orm";
+import { eq, type InferModel } from "drizzle-orm";
 import { db } from "../../infrastructure/db/db";
 import { todos } from "../../infrastructure/db/schema";
 import { Todo as TodoEntity } from "../../domain/entity/Todo";
 
+// Drizzle の行レコード型を引き出すユーティリティ型
+type TodoRow = InferModel<typeof todos, "select">;
 
-function toDomain(row: {
-    id: string;
-    title: string;
-    completed: number;
-    created_at: Date;
-    updated_at: Date;
-    reminder_at: Date | null;
-}): TodoEntity {
-    // ドメインエンティティに復元するヘルパー
-    return TodoEntity.reconstruct({
-        id: row.id,
-        title: row.title,
-        completed: row.completed as 0 | 1,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        reminderAt: row.reminder_at,
-    });
-}
 
-export interface ITodoRepository {
-    findAll(): Promise<TodoEntity[]>;
-    findById(id: string): Promise<TodoEntity | null>;
-    save(todo: TodoEntity): Promise<void>;
-    deleteById(id: string): Promise<void>;
-}
-
-export class TodoRepository implements ITodoRepository {
+export class TodoRepository {
+    /** 全件取得 */
     async findAll(): Promise<TodoEntity[]> {
-        const rows = await db
-            .select({
-                id: todos.id,
-                title: todos.title,
-                completed: todos.completed,
-                created_at: todos.createdAt,
-                updated_at: todos.updatedAt,
-                reminder_at: todos.reminderAt,
-            })
-            .from(todos);
-
-        return rows.map((r) => toDomain(r));
+        const rows: TodoRow[] = await db.select().from(todos);
+        return rows.map(toDomain);
     }
 
+    /** ID で単一取得 */
     async findById(id: string): Promise<TodoEntity | null> {
-        const rows = await db
-            .select({
-                id: todos.id,
-                title: todos.title,
-                completed: todos.completed,
-                created_at: todos.createdAt,
-                updated_at: todos.updatedAt,
-                reminder_at: todos.reminderAt,
-            })
+        const row: TodoRow | undefined = await db
+            .select()
             .from(todos)
             .where(eq(todos.id, id))
-            .limit(1);
-
-        if (rows.length === 0) {
-            return null;
-        }
-        return toDomain(rows[0]);
+            .limit(1)
+            .then((r) => r[0]);
+        return row ? toDomain(row) : null;
     }
 
+    /** upsert */
     async save(todo: TodoEntity): Promise<void> {
-        const data = {
-            id: todo.id,
-            title: todo.title,
-            completed: todo.completed ? 1 : 0,
-            createdAt: todo.createdAt,
-            updatedAt: todo.updatedAt,
-            reminderAt: todo.reminderAt,
-        };
-        // いったん findById して、存在すれば UPDATE、いなければ INSERT
-        const existing = await this.findById(data.id);
-        if (existing) {
-            // UPDATE
-            await db
-                .update(todos)
-                .set({
-                    title: data.title,
-                    completed: data.completed,
-                    updatedAt: data.updatedAt,
-                    reminderAt: data.reminderAt,
-                })
-                .where(eq(todos.id, data.id));
-        } else {
-            // INSERT
-            await db.insert(todos).values({
-                id: data.id,
-                title: data.title,
-                completed: data.completed,
-                createdAt: data.createdAt,
-                updatedAt: data.updatedAt,
-                reminderAt: data.reminderAt,
+        await db
+            .insert(todos)
+            .values({
+                id:             todo.id,
+                title:          todo.title,
+                completed:      todo.completed ? 1 : 0,
+                createdAt:      todo.createdAt,
+                updatedAt:      todo.updatedAt,
+                reminderAt:     todo.reminderAt,
+                dueAt:          todo.dueAt,
+                reminderOffset: todo.reminderOffset,
+                reminded:       todo.reminded ? 1 : 0,
+            })
+            .onConflictDoUpdate({
+                target: todos.id,
+                set: {
+                    title:          todo.title,
+                    completed:      todo.completed ? 1 : 0,
+                    updatedAt:      todo.updatedAt,
+                    reminderAt:     todo.reminderAt,
+                    dueAt:          todo.dueAt,
+                    reminderOffset: todo.reminderOffset,
+                    reminded:       todo.reminded ? 1 : 0,
+                },
             });
-        }
     }
 
+    /** ID で削除 */
     async deleteById(id: string): Promise<void> {
         await db.delete(todos).where(eq(todos.id, id));
     }
+}
+
+// 生レコードをドメインに変換するヘルパー
+function toDomain(row: TodoRow): TodoEntity {
+    return TodoEntity.reconstruct({
+        id:             row.id,
+        title:          row.title,
+        completed:      row.completed === 1,
+        createdAt:      row.createdAt,
+        updatedAt:      row.updatedAt,
+        reminderAt:     row.reminderAt,
+        dueAt:          row.dueAt,
+        reminderOffset: row.reminderOffset,
+        reminded:       row.reminded === 1,
+    });
 }
