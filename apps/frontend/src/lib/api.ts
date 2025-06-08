@@ -4,6 +4,7 @@ export type Todo = {
     completed: 0 | 1;
     createdAt: string;
     updatedAt: string;
+    reminderAt: string | null;
 };
 
 
@@ -18,28 +19,33 @@ export async function fetchTodos(): Promise<Todo[]> {
     return await res.json();
 }
 
-export async function createTodo(title: string): Promise<Todo> {
+    export async function createTodo(
+    title: string,
+        reminderAt: string | null
+): Promise<Todo> {
     const res = await fetch(`${BASE_URL}/api/todos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-    });
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, reminderAt }),
+        });
     if (!res.ok) {
         throw new Error(`createTodo failed: ${res.status}`);
     }
     return await res.json();
 }
 
-export async function updateTodo(
+
+    export async function updateTodo(
     id: string,
-    newTitle: string,
-    completed: boolean
+        newTitle: string,
+        completed: boolean,
+        reminderAt: string | null
 ): Promise<Todo> {
     const res = await fetch(`${BASE_URL}/api/todos/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle, completed }),
-    });
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle, completed, reminderAt }),
+        });
     if (!res.ok) {
         throw new Error(`updateTodo failed: ${res.status}`);
     }

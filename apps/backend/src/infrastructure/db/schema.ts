@@ -6,4 +6,5 @@ export const todos = sqliteTable("todos", {
     completed:  integer("completed").notNull().default(0),
     createdAt:  integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
     updatedAt:  integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+    reminderAt: integer("reminder_at", { mode: "timestamp" }).nullable(),
 });
