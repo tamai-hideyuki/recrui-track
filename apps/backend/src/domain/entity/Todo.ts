@@ -1,4 +1,4 @@
-import { Title } from "../value-object/Title"; // ← 追加
+import { Title } from "../value-object/Title";
 
 export class Todo {
     private _id: string;
@@ -6,25 +6,35 @@ export class Todo {
     private _completed: boolean;
     private _createdAt: Date;
     private _updatedAt: Date;
+    private _reminderAt: Date | null;
 
     private constructor(
         id: string,
         title: Title,
         completed: boolean,
         createdAt: Date,
-        updatedAt: Date
+        updatedAt: Date,
+        reminderAt: Date | null
     ) {
         this._id = id;
         this._title = title;
         this._completed = completed;
         this._createdAt = createdAt;
         this._updatedAt = updatedAt;
+        this._reminderAt = reminderAt;
     }
 
     public static createNew(id: string, rawTitle: string): Todo {
         const title = Title.create(rawTitle);
         const now = new Date();
-        return new Todo(id, title, false, now, now);
+        return new Todo(
+            id,
+            title,
+            false,
+            now,
+            now,
+            null
+        );
     }
 
     public static reconstruct(params: {
@@ -33,6 +43,7 @@ export class Todo {
         completed: 0 | 1;
         createdAt: Date;
         updatedAt: Date;
+        reminderAt: Date | null;
     }): Todo {
         const title = Title.create(params.title);
         return new Todo(
@@ -40,7 +51,8 @@ export class Todo {
             title,
             params.completed === 1,
             params.createdAt,
-            params.updatedAt
+            params.updatedAt,
+            params.reminderAt
         );
     }
 
@@ -72,5 +84,12 @@ export class Todo {
     }
     public get updatedAt(): Date {
         return this._updatedAt;
+    }
+    public get reminderAt(): Date | null {
+        return this._reminderAt;
+    }
+    public changeReminder(reminder: Date | null): void {
+        this._reminderAt = reminder;
+        this._updatedAt = new Date();
     }
 }
