@@ -35,7 +35,12 @@ export default function HomePage() {
   const [newDueAt, setNewDueAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 初回一覧取得（サーバー側で昇順ソート＆通知済み更新済み）
+  // ** 編集モード用 state **
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDueAt, setEditDueAt] = useState<string | null>(null);
+
+  // 一覧取得
   useEffect(() => {
     (async () => {
       try {
@@ -46,6 +51,7 @@ export default function HomePage() {
     })();
   }, []);
 
+  // 追加
   const handleAdd = async () => {
     if (!newTitle.trim()) return;
     try {
@@ -61,6 +67,7 @@ export default function HomePage() {
     }
   };
 
+  // 完了トグル
   const handleToggle = async (t: Todo) => {
     try {
       const updated = await updateTodo(
@@ -77,6 +84,7 @@ export default function HomePage() {
     }
   };
 
+  // 削除
   const handleDelete = async (id: string) => {
     try {
       await deleteTodo(id);
@@ -86,28 +94,66 @@ export default function HomePage() {
     }
   };
 
-  // フィルタ判定用の日時レンジ
+  // --- 編集用ハンドラ ---
+  const startEdit = (t: Todo) => {
+    setEditingId(t.id);
+    setEditTitle(t.title);
+    // datetime-local 用に整形（末尾の秒・Zを削除）
+    setEditDueAt(
+        t.dueAt ? new Date(t.dueAt).toISOString().slice(0, 16) : null
+    );
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditDueAt(null);
+  };
+  const saveEdit = async () => {
+    if (!editingId) return;
+    const original = todos.find((todo) => todo.id === editingId);
+    if (!original) return;
+    try {
+      const updated = await updateTodo(
+          editingId,
+          editTitle.trim(),
+          Boolean(original.completed),
+          editDueAt ? toTokyoISOString(editDueAt) : null
+      );
+      setTodos((prev) =>
+          prev.map((t) => (t.id === updated.id ? updated : t))
+      );
+      cancelEdit();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  // --- フィルタ用の日時レンジ定義 ---
   const now = new Date();
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
   const endOfToday = new Date(startOfToday);
   endOfToday.setDate(endOfToday.getDate() + 1);
-
+  const startDay = startOfToday.getDay();
   const endOfWeek = new Date(startOfToday);
-  const day = startOfToday.getDay();
-  const daysToSat = 6 - day;
-  endOfWeek.setDate(endOfWeek.getDate() + daysToSat + 1);
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - startDay) + 1);
 
+  // --- フィルタ本体 ---
   const filtered = todos.filter((t) => {
     if (!t.dueAt) return filter === "all";
-    const due = new Date(t.dueAt);
+    const dueTs = new Date(t.dueAt).getTime();
+    const fromTs = startOfToday.getTime();
+    const toTodayTs = endOfToday.getTime();
+    const toWeekTs = endOfWeek.getTime();
+    const nowTs = now.getTime();
+
     switch (filter) {
       case "today":
-        return due >= startOfToday && due < endOfToday;
+        return dueTs >= fromTs && dueTs < toTodayTs;
       case "week":
-        return due >= startOfToday && due < endOfWeek;
+        return dueTs >= fromTs && dueTs < toWeekTs;
       case "overdue":
-        return due < now;
+        return dueTs < nowTs;
       default:
         return true;
     }
@@ -118,7 +164,7 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold mb-4">RecruiTrack ToDo</h1>
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        {/* フィルタ */}
+        {/* フィルタ & 追加フォーム */}
         <div className="flex space-x-2 mb-4">
           {(["all", "today", "week", "overdue"] as Filter[]).map((f) => (
               <button
@@ -140,8 +186,6 @@ export default function HomePage() {
               </button>
           ))}
         </div>
-
-        {/* 新規作成フォーム */}
         <div className="flex mb-4 space-x-2">
           <input
               type="text"
@@ -164,19 +208,58 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* 一覧 */}
+        {/* Todo 一覧 */}
         <ul>
           {filtered.map((t) => {
+            const isOverdue =
+                t.dueAt !== null && new Date(t.dueAt).getTime() < now.getTime();
             const dueMs = t.dueAt
                 ? new Date(t.dueAt).getTime() - now.getTime()
                 : 0;
-            const isOverdue =
-                t.dueAt !== null && new Date(t.dueAt).getTime() < Date.now();  // ← 期限超過判定
 
+            // 編集モード
+            if (editingId === t.id) {
+              return (
+                  <li
+                      key={t.id}
+                      className="mb-2 p-2 border rounded bg-yellow-50"
+                  >
+                    <input
+                        type="text"
+                        className="w-full border px-2 py-1 mb-2"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                    />
+                    <input
+                        type="datetime-local"
+                        className="w-full border px-2 py-1 mb-2"
+                        value={editDueAt ?? ""}
+                        onChange={(e) =>
+                            setEditDueAt(e.target.value || null)
+                        }
+                    />
+                    <div className="flex space-x-2">
+                      <button
+                          className="bg-blue-500 text-white px-3 py-1 rounded"
+                          onClick={saveEdit}
+                      >
+                        Save
+                      </button>
+                      <button
+                          className="bg-gray-300 text-gray-700 px-3 py-1 rounded"
+                          onClick={cancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </li>
+              );
+            }
+
+            // 通常表示モード
             return (
                 <li
                     key={t.id}
-                    // 枠線を条件付きで赤 or グレーに切り替え
                     className={`flex items-center justify-between mb-2 p-2 border rounded ${
                         isOverdue ? "border-red-500" : "border-gray-200"
                     }`}
@@ -195,10 +278,12 @@ export default function HomePage() {
                   {t.title}
                 </span>
                   </div>
-                  <div className="text-right text-sm">
+                  <div className="text-right text-sm space-y-1">
                     {t.dueAt ? (
                         <>
-                          <div>期限: {new Date(t.dueAt).toLocaleString()}</div>
+                          <div>
+                            期限: {new Date(t.dueAt).toLocaleString()}
+                          </div>
                           <div>残り: {formatRemaining(dueMs)}</div>
                           <div>
                             通知:{" "}
@@ -212,12 +297,20 @@ export default function HomePage() {
                     ) : (
                         <div className="text-gray-500">期限なし</div>
                     )}
-                    <button
-                        className="text-red-500 mt-1"
-                        onClick={() => handleDelete(t.id)}
-                    >
-                      ✕
-                    </button>
+                    <div className="flex space-x-2 mt-1 justify-end">
+                      <button
+                          className="text-blue-500"
+                          onClick={() => startEdit(t)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                          className="text-red-500"
+                          onClick={() => handleDelete(t.id)}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 </li>
             );
