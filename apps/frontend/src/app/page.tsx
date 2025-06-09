@@ -35,12 +35,12 @@ export default function HomePage() {
   const [newDueAt, setNewDueAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ** 編集モード用 state **
+  // 編集モード用 state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDueAt, setEditDueAt] = useState<string | null>(null);
 
-  // 一覧取得
+  // 初回一覧取得
   useEffect(() => {
     (async () => {
       try {
@@ -51,7 +51,7 @@ export default function HomePage() {
     })();
   }, []);
 
-  // 追加
+  // 新規追加
   const handleAdd = async () => {
     if (!newTitle.trim()) return;
     try {
@@ -94,41 +94,64 @@ export default function HomePage() {
     }
   };
 
-  // --- 編集用ハンドラ ---
+  // 編集モード開始
   const startEdit = (t: Todo) => {
     setEditingId(t.id);
     setEditTitle(t.title);
-    // datetime-local 用に整形（末尾の秒・Zを削除）
-    setEditDueAt(
-        t.dueAt ? new Date(t.dueAt).toISOString().slice(0, 16) : null
-    );
+    setEditDueAt(t.dueAt ? new Date(t.dueAt).toISOString().slice(0, 16) : null);
   };
   const cancelEdit = () => {
     setEditingId(null);
     setEditTitle("");
     setEditDueAt(null);
   };
+
+  // 保存（タイトル・期限編集＋完了／通知リセット）
   const saveEdit = async () => {
     if (!editingId) return;
     const original = todos.find((todo) => todo.id === editingId);
     if (!original) return;
+
+    // 未来締切か判定
+    const nowTs = Date.now();
+    const dueFuture = editDueAt
+        ? new Date(`${editDueAt}:00`).getTime() > nowTs
+        : original.dueAt
+            ? new Date(original.dueAt).getTime() > nowTs
+            : false;
+
+    // API呼び出し用 completed フラグ（boolean）
+    const apiCompleted = dueFuture ? false : Boolean(original.completed);
+
     try {
       const updated = await updateTodo(
           editingId,
           editTitle.trim(),
-          Boolean(original.completed),
+          apiCompleted,
           editDueAt ? toTokyoISOString(editDueAt) : null
       );
+
+      // UI state 更新時は 0|1 にキャスト
       setTodos((prev) =>
-          prev.map((t) => (t.id === updated.id ? updated : t))
+          prev.map((t) => {
+            if (t.id !== updated.id) return t;
+            return {
+              ...updated,
+              completed: apiCompleted ? 1 : 0,
+              reminded: dueFuture ? false : updated.reminded,
+            };
+          })
       );
-      cancelEdit();
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      // 保存処理後は必ず編集モードを閉じる
+      cancelEdit();
     }
   };
 
-  // --- フィルタ用の日時レンジ定義 ---
+  // --- 以下、フィルタ／JSX は saveEdit の外側に ---
+  // フィルタ用日時レンジ
   const now = new Date();
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
@@ -138,14 +161,14 @@ export default function HomePage() {
   const endOfWeek = new Date(startOfToday);
   endOfWeek.setDate(endOfWeek.getDate() + (6 - startDay) + 1);
 
-  // --- フィルタ本体 ---
+  // フィルタ本体
   const filtered = todos.filter((t) => {
     if (!t.dueAt) return filter === "all";
     const dueTs = new Date(t.dueAt).getTime();
     const fromTs = startOfToday.getTime();
     const toTodayTs = endOfToday.getTime();
     const toWeekTs = endOfWeek.getTime();
-    const nowTs = now.getTime();
+    const nowTs2 = now.getTime();
 
     switch (filter) {
       case "today":
@@ -153,7 +176,7 @@ export default function HomePage() {
       case "week":
         return dueTs >= fromTs && dueTs < toWeekTs;
       case "overdue":
-        return dueTs < nowTs;
+        return dueTs < nowTs2;
       default:
         return true;
     }
@@ -170,9 +193,7 @@ export default function HomePage() {
               <button
                   key={f}
                   className={`px-3 py-1 rounded ${
-                      filter === f
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-200 text-gray-700"
+                      filter === f ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"
                   }`}
                   onClick={() => setFilter(f)}
               >
@@ -200,10 +221,7 @@ export default function HomePage() {
               value={newDueAt ?? ""}
               onChange={(e) => setNewDueAt(e.target.value || null)}
           />
-          <button
-              className="bg-green-500 text-white px-4 py-1 rounded"
-              onClick={handleAdd}
-          >
+          <button className="bg-green-500 text-white px-4 py-1 rounded" onClick={handleAdd}>
             Add
           </button>
         </div>
@@ -211,44 +229,30 @@ export default function HomePage() {
         {/* Todo 一覧 */}
         <ul>
           {filtered.map((t) => {
-            const isOverdue =
-                t.dueAt !== null && new Date(t.dueAt).getTime() < now.getTime();
-            const dueMs = t.dueAt
-                ? new Date(t.dueAt).getTime() - now.getTime()
-                : 0;
+            const isOverdue = t.dueAt !== null && new Date(t.dueAt).getTime() < now.getTime();
+            const dueMs = t.dueAt ? new Date(t.dueAt).getTime() - now.getTime() : 0;
 
             // 編集モード
             if (editingId === t.id) {
               return (
-                  <li
-                      key={t.id}
-                      className="mb-2 p-2 border rounded bg-yellow-50"
-                  >
+                  <li key={t.id} className="mb-2 p-2 border rounded bg-black text-white">
                     <input
                         type="text"
-                        className="w-full border px-2 py-1 mb-2"
+                        className="w-full bg-gray-800 text-white border-gray-700 px-2 py-1 mb-2 placeholder-gray-400"
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                     />
                     <input
                         type="datetime-local"
-                        className="w-full border px-2 py-1 mb-2"
+                        className="w-full bg-gray-800 text-white border-gray-700 px-2 py-1 mb-2"
                         value={editDueAt ?? ""}
-                        onChange={(e) =>
-                            setEditDueAt(e.target.value || null)
-                        }
+                        onChange={(e) => setEditDueAt(e.target.value || null)}
                     />
                     <div className="flex space-x-2">
-                      <button
-                          className="bg-blue-500 text-white px-3 py-1 rounded"
-                          onClick={saveEdit}
-                      >
+                      <button className="bg-white text-black px-3 py-1 rounded" onClick={saveEdit}>
                         Save
                       </button>
-                      <button
-                          className="bg-gray-300 text-gray-700 px-3 py-1 rounded"
-                          onClick={cancelEdit}
-                      >
+                      <button className="bg-gray-700 text-white px-3 py-1 rounded" onClick={cancelEdit}>
                         Cancel
                       </button>
                     </div>
@@ -265,25 +269,13 @@ export default function HomePage() {
                     }`}
                 >
                   <div className="flex items-center space-x-2">
-                    <input
-                        type="checkbox"
-                        checked={Boolean(t.completed)}
-                        onChange={() => handleToggle(t)}
-                    />
-                    <span
-                        className={`${
-                            t.completed ? "line-through text-gray-500" : ""
-                        }`}
-                    >
-                  {t.title}
-                </span>
+                    <input type="checkbox" checked={Boolean(t.completed)} onChange={() => handleToggle(t)} />
+                    <span className={`${t.completed ? "line-through text-gray-500" : ""}`}>{t.title}</span>
                   </div>
                   <div className="text-right text-sm space-y-1">
                     {t.dueAt ? (
                         <>
-                          <div>
-                            期限: {new Date(t.dueAt).toLocaleString()}
-                          </div>
+                          <div>期限: {new Date(t.dueAt).toLocaleString()}</div>
                           <div>残り: {formatRemaining(dueMs)}</div>
                           <div>
                             通知:{" "}
@@ -298,16 +290,10 @@ export default function HomePage() {
                         <div className="text-gray-500">期限なし</div>
                     )}
                     <div className="flex space-x-2 mt-1 justify-end">
-                      <button
-                          className="text-blue-500"
-                          onClick={() => startEdit(t)}
-                      >
+                      <button className="text-blue-500" onClick={() => startEdit(t)}>
                         Edit
                       </button>
-                      <button
-                          className="text-red-500"
-                          onClick={() => handleDelete(t.id)}
-                      >
+                      <button className="text-red-500" onClick={() => handleDelete(t.id)}>
                         ✕
                       </button>
                     </div>
