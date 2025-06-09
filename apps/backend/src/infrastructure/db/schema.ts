@@ -12,3 +12,12 @@ export const todos = sqliteTable("todos", {
     reminderOffset: integer("reminder_offset"),                   // 〆切何秒前に通知
     reminded:     integer("reminded").notNull().default(0),        // 通知済みフラグ
 });
+
+    name:           text("name").notNull(),
+    industry:       text("industry").notNull(),
+    appliedDate:    integer("applied_date", { mode: "timestamp" }).notNull(),
+    status:         text("status").notNull(),
+    memo:           text("memo"),
+    createdAt:      integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
+    updatedAt:      integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+});
