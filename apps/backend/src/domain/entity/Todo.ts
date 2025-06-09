@@ -112,6 +112,22 @@ export class Todo {
         this._reminded = false;
         this._updatedAt = new Date();
     }
+    /**
+     * 〆切日時が設定されており、現在時刻を過ぎていたら true を返す
+     */
+    public isOverdue(): boolean {
+        return this._dueAt !== null && this._dueAt.getTime() < Date.now();
+    }
+
+    /**
+     * 期限超過かつ未通知であれば通知済みフラグを立て、updatedAt を更新する
+     */
+    public markRemindedIfOverdue(): void {
+        if (this.isOverdue() && !this._reminded) {
+            this._reminded = true;
+            this._updatedAt = new Date();
+        }
+    }
 
     // ———— getters ————
     public get id(): string {
