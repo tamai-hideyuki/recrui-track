@@ -46,10 +46,10 @@ export class TodoController {
                 completed: t.completed ? 1 : 0,
                 createdAt: t.createdAt.toISOString(),
                 updatedAt: t.updatedAt.toISOString(),
-                reminderAt:     t.reminderAt    ? t.reminderAt.toISOString()    : null,
-                dueAt:          t.dueAt         ? t.dueAt.toISOString()         : null,
+                reminderAt:  t.reminderAt    ? t.reminderAt.toISOString()    : null,
+                dueAt:       t.dueAt         ? t.dueAt.toISOString()         : null,
                 reminderOffset: t.reminderOffset ?? null,
-                reminded:       t.reminded      ? 1 : 0,
+                reminded:    t.reminded      ? 1 : 0,
             }));
 
             return c.json(result);
@@ -78,10 +78,10 @@ export class TodoController {
                 completed: todoEntity.completed ? 1 : 0,
                 createdAt: todoEntity.createdAt.toISOString(),
                 updatedAt: todoEntity.updatedAt.toISOString(),
-                reminderAt:     todoEntity.reminderAt    ? todoEntity.reminderAt.toISOString()    : null,
-                dueAt:          todoEntity.dueAt         ? todoEntity.dueAt.toISOString()         : null,
+                reminderAt:  todoEntity.reminderAt    ? todoEntity.reminderAt.toISOString()    : null,
+                dueAt:       todoEntity.dueAt         ? todoEntity.dueAt.toISOString()         : null,
                 reminderOffset: todoEntity.reminderOffset ?? null,
-                reminded:       todoEntity.reminded       ? 1 : 0,
+                reminded:    todoEntity.reminded       ? 1 : 0,
             };
 
             return c.json(dto);
@@ -102,6 +102,7 @@ export class TodoController {
                 reminderAt?: string | null;
                 dueAt?: string | null;
                 reminderOffset?: number | null;
+                reminded?: boolean;
             };
 
             const id = uuidv4();
@@ -120,10 +121,10 @@ export class TodoController {
                     completed: todoEntity.completed ? 1 : 0,
                     createdAt: todoEntity.createdAt.toISOString(),
                     updatedAt: todoEntity.updatedAt.toISOString(),
-                    reminderAt:     todoEntity.reminderAt    ? todoEntity.reminderAt.toISOString()    : null,
-                    dueAt:          todoEntity.dueAt         ? todoEntity.dueAt.toISOString()         : null,
+                    reminderAt:  todoEntity.reminderAt    ? todoEntity.reminderAt.toISOString()    : null,
+                    dueAt:       todoEntity.dueAt         ? todoEntity.dueAt.toISOString()         : null,
                     reminderOffset: todoEntity.reminderOffset ?? null,
-                    reminded:       todoEntity.reminded       ? 1 : 0,
+                    reminded:    todoEntity.reminded       ? 1 : 0,
                 },
                 201
             );
@@ -149,6 +150,7 @@ export class TodoController {
                 reminderAt?: string | null;
                 dueAt?: string | null;
                 reminderOffset?: number | null;
+                reminded?: boolean;    // ← ここで受け取る
             };
 
             const existing = await repo.findById(id);
@@ -156,36 +158,55 @@ export class TodoController {
                 return c.json({ message: "Not Found" }, 404);
             }
 
+            // 各フィールドを更新
             if (typeof body.title === "string") {
                 existing.changeTitle(body.title.trim());
             }
-            if (body.completed === true && !existing.completed) {
-                existing.complete();
+            if (body.completed !== undefined) {
+                if (body.completed && !existing.completed) {
+                    existing.complete();
+                } else if (!body.completed && existing.completed) {
+                    // 必要なら未完了ロジックを追加
+                }
             }
-            if (body.reminderAt !== undefined)     existing.changeReminder(body.reminderAt ? new Date(body.reminderAt) : null);
-            if (body.dueAt !== undefined)          existing.changeDue(body.dueAt ? new Date(body.dueAt) : null);
-            if (body.reminderOffset !== undefined) existing.changeReminderOffset(body.reminderOffset);
+            if (body.reminderAt !== undefined) {
+                existing.changeReminder(body.reminderAt ? new Date(body.reminderAt) : null);
+            }
+            if (body.dueAt !== undefined) {
+                existing.changeDue(body.dueAt ? new Date(body.dueAt) : null);
+            }
+            if (body.reminderOffset !== undefined) {
+                existing.changeReminderOffset(body.reminderOffset);
+            }
 
+            // ── ここで「通知済み」フラグも更新 ──
+            if (body.reminded !== undefined) {
+                if (body.reminded) {
+                    existing.markReminded();
+                } else {
+                    existing.unmarkReminded();
+                }
+            }
+
+            // 永続化
             await repo.save(existing);
 
+            // DTO にマッピングして返却
             const dto: TodoResponseDto = {
                 id: existing.id,
                 title: existing.title,
                 completed: existing.completed ? 1 : 0,
                 createdAt: existing.createdAt.toISOString(),
                 updatedAt: existing.updatedAt.toISOString(),
-                reminderAt:     existing.reminderAt    ? existing.reminderAt.toISOString()    : null,
-                dueAt:          existing.dueAt         ? existing.dueAt.toISOString()         : null,
+                reminderAt:  existing.reminderAt    ? existing.reminderAt.toISOString()    : null,
+                dueAt:       existing.dueAt         ? existing.dueAt.toISOString()         : null,
                 reminderOffset: existing.reminderOffset ?? null,
-                reminded:       existing.reminded       ? 1 : 0,
+                reminded:    existing.reminded       ? 1 : 0,  // ← 保存された値が返る
             };
 
             return c.json(dto);
         } catch (err) {
             console.error("Failed to update todo:", err);
-            if (err instanceof Error && err.message.includes("タイトル")) {
-                return c.json({ message: err.message }, 400);
-            }
             return c.json({ message: "Internal Server Error" }, 500);
         }
     }
