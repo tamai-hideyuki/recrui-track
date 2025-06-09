@@ -12,6 +12,10 @@ export class GetAllTodosUseCase {
             completed: t.completed,
             createdAt: t.createdAt.toISOString(),
             updatedAt: t.updatedAt.toISOString(),
+            reminderAt:     t.reminderAt    ? t.reminderAt.toISOString()    : null,
+            dueAt:          t.dueAt         ? t.dueAt.toISOString()         : null,
+            reminderOffset: t.reminderOffset ?? null,
+            reminded:       t.reminded,
         }));
     }
 }
