@@ -29,7 +29,7 @@ function toDomain(row: {
 }
 
 export class DrizzleTodoRepository {
-    /** 全件取得 */
+    /** 全件取得（期限昇順ソート） */
     async findAll(): Promise<TodoEntity[]> {
         const rows = await db
             .select({
@@ -43,7 +43,8 @@ export class DrizzleTodoRepository {
                 reminder_offset: todos.reminderOffset,
                 reminded: todos.reminded,
             })
-            .from(todos);
+            .from(todos)
+            .orderBy(todos.dueAt);  // dueAt を昇順ソート
 
         return rows.map(toDomain);
     }
@@ -65,7 +66,7 @@ export class DrizzleTodoRepository {
             .from(todos)
             .where(eq(todos.id, id))
             .limit(1)
-            .then((rs) => rs[0] || null);
+            .then(rs => rs[0] || null);
 
         return row ? toDomain(row) : null;
     }
@@ -90,12 +91,10 @@ export class DrizzleTodoRepository {
                 reminded: todos.reminded,
             })
             .from(todos)
-            .where(
-                and(
-                    gte(todos.dueAt, start),
-                    lt(todos.dueAt, end)
-                )
-            );
+            .where(and(
+                gte(todos.dueAt, start),
+                lt(todos.dueAt, end),
+            ));
 
         return rows.map(toDomain);
     }
@@ -144,7 +143,7 @@ export class DrizzleTodoRepository {
         return rows.map(toDomain);
     }
 
-    /** upsert */
+    /** 新規作成・更新 */
     async save(todo: TodoEntity): Promise<void> {
         await db
             .insert(todos)
@@ -173,8 +172,18 @@ export class DrizzleTodoRepository {
             });
     }
 
+    /** 期限超過時に通知ステータスを “通知済み” に更新 */
+    async markNotified(id: string): Promise<void> {
+        await db
+            .update(todos)
+            .set({ reminded: 1 })
+            .where(eq(todos.id, id));
+    }
+
     /** ID で削除 */
     async deleteById(id: string): Promise<void> {
-        await db.delete(todos).where(eq(todos.id, id));
+        await db
+            .delete(todos)
+            .where(eq(todos.id, id));
     }
 }

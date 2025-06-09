@@ -16,6 +16,7 @@ export class TodoController {
         try {
             let todos: TodoEntity[];
 
+            // フィルタに応じて取得メソッドを選択
             switch (filter) {
                 case "due-today":
                     todos = await repo.findDueToday();
@@ -30,6 +31,15 @@ export class TodoController {
                     todos = await repo.findAll();
             }
 
+            // 期限超過かつ未通知のものはドメインでマーク＆永続化
+            for (const t of todos) {
+                t.markRemindedIfOverdue();
+                if (t.reminded) {
+                    await repo.markNotified(t.id);
+                }
+            }
+
+            // DTO にマッピング
             const result: TodoResponseDto[] = todos.map((t) => ({
                 id: t.id,
                 title: t.title,

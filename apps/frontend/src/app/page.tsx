@@ -9,17 +9,13 @@ import {
   type Todo,
 } from "@/lib/api";
 
-/**
- * ローカル日時文字列 → JST(+09:00) → UTC ISO-8601 に変換
- */
+/** ローカル日時文字列 → JST(+09:00) → UTC ISO-8601 に変換 */
 function toTokyoISOString(localDatetime: string): string {
   const [d, t] = localDatetime.split("T");
   return new Date(`${d}T${t}:00+09:00`).toISOString();
 }
 
-/**
- * 残り時間を「X日Y時間Z分」のフォーマットで返す
- */
+/** 残り時間を「X日Y時間Z分」のフォーマットで返す */
 function formatRemaining(ms: number): string {
   if (ms <= 0) return "期限超過";
   const days = Math.floor(ms / 86_400_000);
@@ -30,7 +26,6 @@ function formatRemaining(ms: number): string {
   }`;
 }
 
-// フィルタ種別
 type Filter = "all" | "today" | "week" | "overdue";
 
 export default function HomePage() {
@@ -40,7 +35,7 @@ export default function HomePage() {
   const [newDueAt, setNewDueAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 初回一覧取得
+  // 初回一覧取得（サーバー側で昇順ソート＆通知済み更新済み）
   useEffect(() => {
     (async () => {
       try {
@@ -74,7 +69,9 @@ export default function HomePage() {
           !t.completed,
           t.dueAt
       );
-      setTodos((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      setTodos((prev) =>
+          prev.map((x) => (x.id === updated.id ? updated : x))
+      );
     } catch (e) {
       setError((e as Error).message);
     }
@@ -89,7 +86,7 @@ export default function HomePage() {
     }
   };
 
-  // フィルタ適用
+  // フィルタ判定用の日時レンジ
   const now = new Date();
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
@@ -97,7 +94,6 @@ export default function HomePage() {
   endOfToday.setDate(endOfToday.getDate() + 1);
 
   const endOfWeek = new Date(startOfToday);
-  // 日本では週の始まりを日曜とすると、日曜0→土曜6
   const day = startOfToday.getDay();
   const daysToSat = 6 - day;
   endOfWeek.setDate(endOfWeek.getDate() + daysToSat + 1);
@@ -171,11 +167,19 @@ export default function HomePage() {
         {/* 一覧 */}
         <ul>
           {filtered.map((t) => {
-            const dueMs = t.dueAt ? new Date(t.dueAt).getTime() - now.getTime() : 0;
+            const dueMs = t.dueAt
+                ? new Date(t.dueAt).getTime() - now.getTime()
+                : 0;
+            const isOverdue =
+                t.dueAt !== null && new Date(t.dueAt).getTime() < Date.now();  // ← 期限超過判定
+
             return (
                 <li
                     key={t.id}
-                    className="flex items-center justify-between mb-2 p-2 border rounded"
+                    // 枠線を条件付きで赤 or グレーに切り替え
+                    className={`flex items-center justify-between mb-2 p-2 border rounded ${
+                        isOverdue ? "border-red-500" : "border-gray-200"
+                    }`}
                 >
                   <div className="flex items-center space-x-2">
                     <input
