@@ -4,6 +4,8 @@ services:
       context: ../apps/frontend
       dockerfile: ../../docker/frontend.Dockerfile
       target: runner
+      args:
+        NEXT_PUBLIC_API_URL: "/api"
     container_name: "${FRONTEND_CONTAINER}"
     image: "${FRONTEND_CONTAINER}:${FRONTEND_IMAGE_TAG}"
     restart: unless-stopped
