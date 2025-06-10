@@ -1,11 +1,37 @@
+// src/interface/router/companies.ts
 import { Hono } from "hono";
 import { CompanyController } from "../controller/CompanyController";
 
-const companyRouter = new Hono();
+const router = new Hono();
 
-companyRouter.get("/companies", CompanyController.getAll);
-companyRouter.post("/companies", CompanyController.create);
-companyRouter.put("/companies/:id", CompanyController.update);
-companyRouter.delete("/companies/:id", CompanyController.delete);
+/**
+ * (1) 全企業取得
+ * GET /api/companies
+ */
+router.get("/companies", (c) => CompanyController.getAll(c));
 
-export default companyRouter;
+/**
+ * (2) 単一企業取得
+ * GET /api/companies/:id
+ */
+router.get("/companies/:id", (c) => CompanyController.getById(c));
+
+/**
+ * (3) 新規企業登録
+ * POST /api/companies
+ */
+router.post("/companies", (c) => CompanyController.create(c));
+
+/**
+ * (4) 企業情報更新
+ * PUT /api/companies/:id
+ */
+router.put("/companies/:id", (c) => CompanyController.update(c));
+
+/**
+ * (5) 企業削除
+ * DELETE /api/companies/:id
+ */
+router.delete("/companies/:id", (c) => CompanyController.delete(c));
+
+export default router;
