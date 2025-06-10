@@ -5,6 +5,10 @@ WORKDIR /app
 COPY package.json yarn.lock tsconfig.json ./
 RUN yarn install --frozen-lockfile
 
+# drizzle.config.ts をここでコピー
+COPY drizzle.config.ts ./
+
+# その他のソースコードをコピー
 COPY . .
 # backend のビルドスクリプトで dist/ に出力される想定
 RUN yarn build

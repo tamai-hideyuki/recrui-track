@@ -6,8 +6,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate:generate": "drizzle-kit generate --schema src/db/schema.ts --out migrations",
-    "migrate:push": "drizzle-kit push --schema src/db/schema.ts",
+    "migrate:generate": "drizzle-kit generate --schema src/infrastructure/db/schema.ts --out migrations",
+    "migrate:push": "drizzle-kit push --schema src/infrastructure/db/schema.ts",
     "migrate": "npm run migrate:generate && npm run migrate:push"
   },
   "dependencies": {
