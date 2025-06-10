@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { CompanyController } from "../controller/CompanyController";
 
-const app = new Hono();
+const companyRouter = new Hono();
 
-app.get("/api/companies", CompanyController.getAll);
-app.post("/api/companies", CompanyController.create);
-app.put("/api/companies/:id", CompanyController.update);
-app.delete("/api/companies/:id", CompanyController.delete);
+companyRouter.get("/companies", CompanyController.getAll);
+companyRouter.post("/companies", CompanyController.create);
+companyRouter.put("/companies/:id", CompanyController.update);
+companyRouter.delete("/companies/:id", CompanyController.delete);
 
-export default app;
+export default companyRouter;

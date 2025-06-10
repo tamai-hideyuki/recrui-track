@@ -7,21 +7,18 @@ import { router } from "./interface/router";
 const app = new Hono();
 
 app.use("/api/*", cors());
-
 app.use("*", async (c, next) => {
     try {
         return await next();
     } catch (err) {
         console.error("Internal Error:", err);
-        return c.text("Internal Server Error", 500);
+        return c.text("Internal Server Error", { status: 500 });
     }
 });
 
 app.route("/api", router);
-
 app.get("/", (c) => c.text("Hello RecruiTrack!"));
-
-app.all("*", (c) => c.text("404 - Page Not Found", 404));
+app.all("*", (c) => c.text("404 - Page Not Found", { status: 404 }));
 
 const PORT = Number(process.env.PORT ?? 3003);
 serve({ fetch: app.fetch, port: PORT });

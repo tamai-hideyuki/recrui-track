@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
-// 既存 todos テーブル定義
 export const todos = sqliteTable("todos", {
     id: text("id").primaryKey(),
     title: text("title").notNull(),
@@ -13,8 +13,8 @@ export const todos = sqliteTable("todos", {
     reminded: integer("reminded").notNull().default(0),
 });
 
-// 新規 companies テーdブル定義
-
+export const companies = sqliteTable("companies", {
+    id: text("id").primaryKey().default(sql`lower(hex(randomblob(16)))`),
     name: text("name").notNull(),
     industry: text("industry").notNull(),
     appliedDate: integer("applied_date", { mode: "timestamp" }).notNull(),

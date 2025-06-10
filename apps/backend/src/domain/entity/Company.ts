@@ -14,6 +14,8 @@ export class Company {
     appliedDate: Date;
     status: CompanyStatus;
     memo?: string;
+    readonly createdAt: Date;
+    updatedAt: Date;
 
     private constructor(
         id: string,
@@ -21,7 +23,9 @@ export class Company {
         industry: string,
         appliedDate: Date,
         status: CompanyStatus,
-        memo?: string
+        memo: string | undefined,
+        createdAt: Date,
+        updatedAt: Date
     ) {
         this.id = id;
         this.name = name;
@@ -29,6 +33,8 @@ export class Company {
         this.appliedDate = appliedDate;
         this.status = status;
         this.memo = memo;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     /** 新規 Company 作成 */
@@ -39,7 +45,40 @@ export class Company {
         status: CompanyStatus,
         memo?: string
     ): Company {
-        return new Company(uuidv4(), name, industry, appliedDate, status, memo);
+        const now = new Date();
+        return new Company(
+            uuidv4(),
+            name,
+            industry,
+            appliedDate,
+            status,
+            memo,
+            now,
+            now
+        );
+    }
+
+    /** DB から復元 */
+    static reconstruct(
+        id: string,
+        name: string,
+        industry: string,
+        appliedDate: Date,
+        status: CompanyStatus,
+        memo: string | undefined,
+        createdAt: Date,
+        updatedAt: Date
+    ): Company {
+        return new Company(
+            id,
+            name,
+            industry,
+            appliedDate,
+            status,
+            memo,
+            createdAt,
+            updatedAt
+        );
     }
 
     /** プロパティ更新 */
@@ -55,5 +94,6 @@ export class Company {
         this.appliedDate = appliedDate;
         this.status = status;
         this.memo = memo;
+        this.updatedAt = new Date();
     }
 }
