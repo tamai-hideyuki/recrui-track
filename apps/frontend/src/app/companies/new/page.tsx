@@ -58,7 +58,7 @@ export default function CompanyNewPage() {
 
                 {/* 業種 */}
                 <div>
-                    <label className="block mb-1 font-medium text-gray-700">業種</label>
+                    <label className="block mb-1 font-medium text-gray-700">URL</label>
                     <input
                         {...register("industry")}
                         className={`w-full text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
@@ -96,9 +96,14 @@ export default function CompanyNewPage() {
                     >
                         <option value="未応募">未応募</option>
                         <option value="応募済">応募済</option>
-                        <option value="選考中">選考中</option>
+                        <option value="一次選考中">一次選考中</option>
+                        <option value="二次選考中">二次選考中</option>
+                        <option value="三次選考中">三次選考中</option>
+                        <option value="最終面接">最終面接</option>
                         <option value="内定">内定</option>
+                        <option value="ウェルカム面談">ウェルカム面談</option>
                         <option value="辞退">辞退</option>
+                        <option value="不採用">不採用</option>
                     </select>
                 </div>
 
