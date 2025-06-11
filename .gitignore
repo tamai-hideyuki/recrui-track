@@ -9,7 +9,7 @@ out/
 docker/.env
 package.json
 yarn.lock
-
+../apps/backend/src/infrastructure/db/recrui-track.db
 apps/backend/local.db
 apps/backend/node_modules/
 apps/backend/dist/

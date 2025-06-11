@@ -33,7 +33,7 @@ services:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
       - ../apps/backend/src/infrastructure/db/recrui-track.db:/app/recrui-track.db
-
+    # - ./recrui-track.db:/app/recrui-track.db
   nginx:
     image: nginx:stable-alpine
     container_name: "${NGINX_CONTAINER}"

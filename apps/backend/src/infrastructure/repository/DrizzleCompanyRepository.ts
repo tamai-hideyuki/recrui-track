@@ -1,4 +1,5 @@
 import { eq, type InferModel } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";                                         // ← 追加
 import { db } from "../db/db";
 import { companies } from "../db/schema";
 import { Company as CompanyEntity, CompanyStatus } from "../../domain/entity/Company";
@@ -61,19 +62,30 @@ export class DrizzleCompanyRepository {
         return row ? toDomain(row) : null;
     }
 
-    /** 新規作成または更新 */
+    /**
+     * 新規作成または更新
+     *
+     * - entity.id が falsy なら新規作成、真なら更新として扱う
+     * - 新規の場合は createdAt/updatedAt ともに現在時刻を設定
+     * - 更新時は updatedAt のみ現在時刻に上書き
+     */
     async save(entity: CompanyEntity): Promise<void> {
+        const isNew = !entity.id;
+        const id = isNew ? uuidv4() : entity.id;
+        const now = new Date();
+        const createdAt = isNew ? now : entity.createdAt;
+
         await db
             .insert(companies)
             .values({
-                id:           entity.id,
+                id,
                 name:         entity.name,
                 industry:     entity.industry,
                 appliedDate:  entity.appliedDate,
                 status:       entity.status,
                 memo:         entity.memo,
-                createdAt:    entity.createdAt,
-                updatedAt:    entity.updatedAt,
+                createdAt,
+                updatedAt:    now,
             })
             .onConflictDoUpdate({
                 target: companies.id,
@@ -83,7 +95,7 @@ export class DrizzleCompanyRepository {
                     appliedDate:  entity.appliedDate,
                     status:       entity.status,
                     memo:         entity.memo,
-                    updatedAt:    new Date(),
+                    updatedAt:    now,
                 },
             });
     }
