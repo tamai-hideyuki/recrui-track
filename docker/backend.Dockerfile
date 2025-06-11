@@ -2,14 +2,14 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-COPY package.json yarn.lock tsconfig.json ./
+# package.json, yarn.lock, tsconfig.json をコピー
+COPY drizzle.config.ts package.json yarn.lock tsconfig.json ./
+
 RUN yarn install --frozen-lockfile
 
-# drizzle.config.ts をここでコピー
-COPY drizzle.config.ts ./
-
-# その他のソースコードをコピー
+# その他のソースコードをコピー (drizzle.config.ts は既にコピーされているので、ここで重複コピーされても問題ない)
 COPY . .
+
 # backend のビルドスクリプトで dist/ に出力される想定
 RUN yarn build
 
