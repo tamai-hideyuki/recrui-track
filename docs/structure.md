@@ -46,7 +46,7 @@ recrui-track/
 │   │   │   ├── AuthMiddleware.ts
 │   │   │   └── ValidationMiddleware.ts
 │   │   └── routes/      
-│   │       └── index.ts
+│   │       └── todos.ts
 │   │
 │   ├── infrastructure/  
 │   │   ├── repositories/
@@ -60,7 +60,7 @@ recrui-track/
 │   │   │   ├── SlackNotifier.ts
 │   │   │   └── ...
 │   │   ├── config/      
-│   │   │   └── index.ts
+│   │   │   └── todos.ts
 │   │   └── di/          
 │   │       └── container.ts
 │   │

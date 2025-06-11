@@ -4,6 +4,8 @@ services:
       context: ../apps/frontend
       dockerfile: ../../docker/frontend.Dockerfile
       target: runner
+      args:
+        NEXT_PUBLIC_API_URL: "/api"
     container_name: "${FRONTEND_CONTAINER}"
     image: "${FRONTEND_CONTAINER}:${FRONTEND_IMAGE_TAG}"
     restart: unless-stopped
@@ -30,8 +32,8 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
-      - ../apps/backend/recrui-track.db:/app/recrui-track.db
-
+      - ../apps/backend/src/infrastructure/db/recrui-track.db:/app/recrui-track.db
+    # - ./recrui-track.db:/app/recrui-track.db
   nginx:
     image: nginx:stable-alpine
     container_name: "${NGINX_CONTAINER}"

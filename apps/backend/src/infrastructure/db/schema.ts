@@ -1,14 +1,27 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
-export const todos = sqliteTable("todos", {
-    id:           text("id").primaryKey(),
-    title:        text("title").notNull(),
-    completed:    integer("completed").notNull().default(0),
-    createdAt:    integer("created_at", { mode: "timestamp" }).notNull().defaultNow(),
-    updatedAt:    integer("updated_at", { mode: "timestamp" }).notNull().defaultNow(),
+// ★ as const を付けてリテラル型化
+const timestamp = { mode: "timestamp" } as const;
 
-    reminderAt:   integer("reminder_at",   { mode: "timestamp" }), // 通知日時
-    dueAt:        integer("due_at",        { mode: "timestamp" }), // 〆切日時
-    reminderOffset: integer("reminder_offset"),                   // 〆切何秒前に通知
-    reminded:     integer("reminded").notNull().default(0),        // 通知済みフラグ
+export const todos = sqliteTable("todos", {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    completed: integer("completed").notNull().default(0),
+    createdAt: integer("created_at", timestamp).notNull(),
+    updatedAt: integer("updated_at", timestamp).notNull(),
+    reminderAt: integer("reminder_at", timestamp),
+    dueAt: integer("due_at", timestamp),
+    reminderOffset: integer("reminder_offset"),
+    reminded: integer("reminded").notNull().default(0),
+});
+
+export const companies = sqliteTable("companies", {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    industry: text("industry").notNull(),
+    appliedDate: integer("applied_date", timestamp).notNull(),
+    status: text("status").notNull(),
+    memo: text("memo"),
+    createdAt: integer("created_at", timestamp).notNull(),
+    updatedAt: integer("updated_at", timestamp).notNull(),
 });

@@ -1,16 +1,19 @@
-import type { Config } from "drizzle-kit"
+import type { Config } from "drizzle-kit";
 
 const config: Config = {
 
     dialect: "sqlite",
 
-    schema: "./src/infrastructure/db/schema.ts",
+    // schema は配列で渡す
+    schema: ["src/infrastructure/db/schema.ts"],
 
-    out: "./drizzle",
+    // 出力先もプロジェクトルートからの相対パス
+    out: "drizzle/migrations",
 
+    // DB ファイルへの接続情報
     dbCredentials: {
-        url: "file:./recrui-track.db",
+        url: "file:./src/infrastructure/db/recrui-track.db",
     },
-}
+};
 
-export default config
+export default config;
