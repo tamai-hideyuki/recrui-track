@@ -13,8 +13,6 @@ import {
 
 export default function CompanyEditPage() {
     const router = useRouter();
-
-    // 型アサーションで「id: string」として扱う
     const { id } = useParams() as { id: string };
 
     const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +27,6 @@ export default function CompanyEditPage() {
         resolver: zodResolver(CompanyFormSchema),
     });
 
-    // 既存データを取得してフォームに設定
     useEffect(() => {
         if (!id) return;
         (async () => {
@@ -89,7 +86,7 @@ export default function CompanyEditPage() {
                     <label className="block mb-1 font-medium">企業名</label>
                     <input
                         {...register("name")}
-                        className={`w-full border rounded px-3 py-2 ${
+                        className={`w-full text-black border rounded px-3 py-2 ${
                             errors.name ? "border-red-500" : "border-gray-300"
                         }`}
                     />
@@ -105,7 +102,7 @@ export default function CompanyEditPage() {
                     <label className="block mb-1 font-medium">業種</label>
                     <input
                         {...register("industry")}
-                        className={`w-full border rounded px-3 py-2 ${
+                        className={`w-full text-black border rounded px-3 py-2 ${
                             errors.industry ? "border-red-500" : "border-gray-300"
                         }`}
                     />
@@ -122,7 +119,7 @@ export default function CompanyEditPage() {
                     <input
                         type="date"
                         {...register("appliedDate")}
-                        className={`w-full border rounded px-3 py-2 ${
+                        className={`w-full text-black border rounded px-3 py-2 ${
                             errors.appliedDate ? "border-red-500" : "border-gray-300"
                         }`}
                     />
@@ -138,7 +135,7 @@ export default function CompanyEditPage() {
                     <label className="block mb-1 font-medium">ステータス</label>
                     <select
                         {...register("status")}
-                        className="w-full border-gray-300 border rounded px-3 py-2"
+                        className="w-full text-black border-gray-300 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                         <option value="未応募">未応募</option>
                         <option value="応募済">応募済</option>
@@ -154,7 +151,7 @@ export default function CompanyEditPage() {
                     <textarea
                         {...register("memo")}
                         rows={4}
-                        className="w-full border-gray-300 border rounded px-3 py-2"
+                        className="w-full text-black border-gray-300 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                 </div>
 

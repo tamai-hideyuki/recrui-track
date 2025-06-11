@@ -47,7 +47,7 @@ export default function CompanyNewPage() {
                     <label className="block mb-1 font-medium text-gray-700">企業名</label>
                     <input
                         {...register("name")}
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        className={`w-full text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                             errors.name ? "border-red-500" : "border-gray-300"
                         }`}
                     />
@@ -61,7 +61,7 @@ export default function CompanyNewPage() {
                     <label className="block mb-1 font-medium text-gray-700">業種</label>
                     <input
                         {...register("industry")}
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        className={`w-full text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                             errors.industry ? "border-red-500" : "border-gray-300"
                         }`}
                     />
@@ -76,7 +76,7 @@ export default function CompanyNewPage() {
                     <input
                         type="date"
                         {...register("appliedDate")}
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        className={`w-full text-black border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
                             errors.appliedDate ? "border-red-500" : "border-gray-300"
                         }`}
                     />
@@ -92,7 +92,7 @@ export default function CompanyNewPage() {
                     <label className="block mb-1 font-medium text-gray-700">ステータス</label>
                     <select
                         {...register("status")}
-                        className="w-full border-gray-300 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="w-full text-black border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                         <option value="未応募">未応募</option>
                         <option value="応募済">応募済</option>
@@ -108,7 +108,7 @@ export default function CompanyNewPage() {
                     <textarea
                         {...register("memo")}
                         rows={4}
-                        className="w-full border-gray-300 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="w-full text-black border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                 </div>
 

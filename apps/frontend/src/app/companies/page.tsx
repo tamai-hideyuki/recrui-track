@@ -67,8 +67,8 @@ export default function CompanyList() {
                 </Link>
             </div>
             <div className="overflow-x-auto">
-                <table className="min-w-full table-auto bg-white shadow rounded">
-                    <thead className="bg-gray-100">
+                <table className="min-w-full table-auto bg-white shadow rounded text-black">
+                    <thead className="bg-gray-100 text-black">
                     <tr>
                         <th className="px-4 py-2 text-left">企業名</th>
                         <th className="px-4 py-2 text-left">業種</th>
