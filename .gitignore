@@ -16,3 +16,6 @@ apps/backend/dist/
 apps/backend/drizzle/
 apps/frontend/node_modules/
 apps/frontend/.next/
+
+/apps/frontend/public/career/*.svg
+
