@@ -17,3 +17,8 @@ const config: Config = {
 };
 
 export default config;
+
+
+// マイグレーションの際は以下コマンドで。
+// npx drizzle-kit generate --name add_url_to_companies
+// npx drizzle-kit push

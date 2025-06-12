@@ -6,15 +6,16 @@ export class GetAllCompaniesUseCase {
 
     async execute(): Promise<CompanyOutput[]> {
         const entities = await this.repo.findAll();
-        return entities.map(e => ({
-            id: e.id,
-            name: e.name,
-            industry: e.industry,
-            appliedDate: e.appliedDate.getTime(),
-            status: e.status,
-            memo: e.memo,
-            createdAt: e['createdAt']?.getTime() ?? 0,
-            updatedAt: e['updatedAt']?.getTime() ?? 0,
+        return entities.map((r): CompanyOutput => ({
+            id:          r.id,
+            name:        r.name,
+            industry:    r.industry,
+            url:         r.url,
+            appliedDate: r.appliedDate.getTime(),
+            status:      r.status,
+            memo:        r.memo ?? undefined,
+            createdAt:   r.createdAt.getTime(),
+            updatedAt:   r.updatedAt.getTime(),
         }));
     }
 }

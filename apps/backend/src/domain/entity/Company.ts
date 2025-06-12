@@ -1,68 +1,38 @@
-import { v4 as uuidv4 } from "uuid";
-
+/** 募集ステータスの列挙型 */
 export type CompanyStatus =
     | "未応募"
+    | "カジュアル面談"
+    | "書類選考中"
     | "応募済"
     | "選考中"
+    | "一次選考"
+    | "二次選考"
+    | "三次選考"
+    | "最終面接"
     | "内定"
-    | "辞退";
-
+    | "オファー面談"
+    | "辞退"
+    | "不採用";
+/** ドメインエンティティ：企業 */
 export class Company {
-    readonly id: string;
-    name: string;
-    industry: string;
-    appliedDate: Date;
-    status: CompanyStatus;
-    memo?: string;
-    readonly createdAt: Date;
-    updatedAt: Date;
-
     private constructor(
+        public readonly id: string,
+        public readonly name: string,
+        public readonly industry: string,
+        public readonly url: string,
+        public readonly appliedDate: Date,
+        public readonly status: CompanyStatus,
+        public readonly memo: string | undefined,
+        public readonly createdAt: Date,
+        public readonly updatedAt: Date
+    ) {}
+
+    /** 再構築用：DB からの復元など */
+    public static reconstruct(
         id: string,
         name: string,
         industry: string,
-        appliedDate: Date,
-        status: CompanyStatus,
-        memo: string | undefined,
-        createdAt: Date,
-        updatedAt: Date
-    ) {
-        this.id = id;
-        this.name = name;
-        this.industry = industry;
-        this.appliedDate = appliedDate;
-        this.status = status;
-        this.memo = memo;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    /** 新規 Company 作成 */
-    static createNew(
-        name: string,
-        industry: string,
-        appliedDate: Date,
-        status: CompanyStatus,
-        memo?: string
-    ): Company {
-        const now = new Date();
-        return new Company(
-            uuidv4(),
-            name,
-            industry,
-            appliedDate,
-            status,
-            memo,
-            now,
-            now
-        );
-    }
-
-    /** DB から復元 */
-    static reconstruct(
-        id: string,
-        name: string,
-        industry: string,
+        url: string,
         appliedDate: Date,
         status: CompanyStatus,
         memo: string | undefined,
@@ -73,6 +43,7 @@ export class Company {
             id,
             name,
             industry,
+            url,
             appliedDate,
             status,
             memo,
@@ -81,19 +52,26 @@ export class Company {
         );
     }
 
-    /** プロパティ更新 */
-    update(
+    /** 新規作成用ファクトリ */
+    public static createNew(
         name: string,
         industry: string,
+        url: string,
         appliedDate: Date,
         status: CompanyStatus,
         memo?: string
-    ) {
-        this.name = name;
-        this.industry = industry;
-        this.appliedDate = appliedDate;
-        this.status = status;
-        this.memo = memo;
-        this.updatedAt = new Date();
+    ): Company {
+        const now = new Date();
+        return new Company(
+            "", // ID はリポジトリ側で付与
+            name,
+            industry,
+            url,
+            appliedDate,
+            status,
+            memo,
+            now,
+            now
+        );
     }
 }

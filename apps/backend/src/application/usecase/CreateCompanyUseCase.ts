@@ -7,23 +7,30 @@ export class CreateCompanyUseCase {
     constructor(private repo: CompanyRepositoryPort) {}
 
     async execute(input: CreateCompanyInput): Promise<CompanyOutput> {
+        // ドメインエンティティを生成（appliedDate を Date に変換）
         const entity = Company.createNew(
             input.name,
             input.industry,
+            input.url,
             new Date(input.appliedDate),
-            input.status as any,
-            input.memo,
+            input.status,
+            input.memo
         );
+
+        // 永続化
         await this.repo.save(entity);
+
+        // 出力用 DTO にマッピング
         return {
-            id: entity.id,
-            name: entity.name,
-            industry: entity.industry,
+            id:          entity.id,
+            name:        entity.name,
+            industry:    entity.industry,
+            url:         entity.url,
             appliedDate: entity.appliedDate.getTime(),
-            status: entity.status,
-            memo: entity.memo,
-            createdAt: entity['createdAt']?.getTime() ?? Date.now(),
-            updatedAt: entity['updatedAt']?.getTime() ?? Date.now(),
+            status:      entity.status,
+            memo:        entity.memo,
+            createdAt:   entity.createdAt.getTime(),
+            updatedAt:   entity.updatedAt.getTime(),
         };
     }
 }

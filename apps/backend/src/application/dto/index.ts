@@ -1,5 +1,3 @@
-export { CreateCompanyInputSchema }   from "./CreateCompanyInput";
-export { UpdateCompanyInputSchema }   from "./UpdateCompanyInput";
-export type { CreateCompanyInput }    from "./CreateCompanyInput";
-export type { UpdateCompanyInput }    from "./UpdateCompanyInput";
-export { CompanyOutputSchema, CompanyOutput } from "./CompanyOutput";
+export { CompanyOutputSchema, type CompanyOutput } from "./CompanyOutput";
+export { CreateCompanyInputSchema, type CreateCompanyInput } from "./CreateCompanyInput";
+export { UpdateCompanyInputSchema, type UpdateCompanyInput } from "./UpdateCompanyInput";

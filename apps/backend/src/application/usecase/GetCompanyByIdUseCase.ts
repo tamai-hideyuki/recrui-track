@@ -5,17 +5,19 @@ export class GetCompanyByIdUseCase {
     constructor(private repo: CompanyRepositoryPort) {}
 
     async execute(id: string): Promise<CompanyOutput | null> {
-        const e = await this.repo.findById(id);
-        if (!e) return null;
+        const entity = await this.repo.findById(id);
+        if (!entity) return null;
+
         return {
-            id: e.id,
-            name: e.name,
-            industry: e.industry,
-            appliedDate: e.appliedDate.getTime(),
-            status: e.status,
-            memo: e.memo,
-            createdAt: e['createdAt']?.getTime() ?? 0,
-            updatedAt: e['updatedAt']?.getTime() ?? 0,
+            id:          entity.id,
+            name:        entity.name,
+            industry:    entity.industry,
+            url:         entity.url,
+            appliedDate: entity.appliedDate.getTime(),
+            status:      entity.status,
+            memo:        entity.memo ?? undefined,
+            createdAt:   entity.createdAt.getTime(),
+            updatedAt:   entity.updatedAt.getTime(),
         };
     }
 }

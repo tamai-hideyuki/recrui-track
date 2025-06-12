@@ -1,109 +1,73 @@
 import { eq, type InferModel } from "drizzle-orm";
-import { v4 as uuidv4 } from "uuid";                                         // ← 追加
+import { v4 as uuidv4 } from "uuid";
 import { db } from "../db/db";
 import { companies } from "../db/schema";
 import { Company as CompanyEntity, CompanyStatus } from "../../domain/entity/Company";
 
 // Drizzle のテーブル定義から SELECT 用の行型を自動取得
-type CompanyRow = InferModel<typeof companies, "select">;
+export type CompanyRow = InferModel<typeof companies, "select">;
 
 /** DB レコード → ドメインエンティティ変換 */
-function toDomain(row: CompanyRow): CompanyEntity {
-    return CompanyEntity.reconstruct(
+const toDomain = (row: CompanyRow): CompanyEntity =>
+    CompanyEntity.reconstruct(
         row.id,
         row.name,
         row.industry,
+        row.url,
         row.appliedDate,
         row.status as CompanyStatus,
         row.memo ?? undefined,
         row.createdAt,
         row.updatedAt
     );
-}
 
 export class DrizzleCompanyRepository {
-    /** 全件取得（作成日時昇順ソート） */
+    /** 全件取得（作成日時昇順） */
     async findAll(): Promise<CompanyEntity[]> {
-        const rows = await db
-            .select({
-                id:           companies.id,
-                name:         companies.name,
-                industry:     companies.industry,
-                appliedDate:  companies.appliedDate,
-                status:       companies.status,
-                memo:         companies.memo,
-                createdAt:    companies.createdAt,
-                updatedAt:    companies.updatedAt,
-            })
+        const rows: CompanyRow[] = await db
+            .select()
             .from(companies)
             .orderBy(companies.createdAt);
-
         return rows.map(toDomain);
     }
 
     /** ID で単一取得 */
     async findById(id: string): Promise<CompanyEntity | null> {
-        const row = await db
-            .select({
-                id:           companies.id,
-                name:         companies.name,
-                industry:     companies.industry,
-                appliedDate:  companies.appliedDate,
-                status:       companies.status,
-                memo:         companies.memo,
-                createdAt:    companies.createdAt,
-                updatedAt:    companies.updatedAt,
-            })
+        const rows: CompanyRow[] = await db
+            .select()
             .from(companies)
-            .where(eq(companies.id, id))
-            .limit(1)
-            .then(rs => rs[0] ?? null);
-
-        return row ? toDomain(row) : null;
+            .where(eq(companies.id, id));
+        return rows.length > 0 ? toDomain(rows[0]) : null;
     }
 
-    /**
-     * 新規作成または更新
-     *
-     * - entity.id が falsy なら新規作成、真なら更新として扱う
-     * - 新規の場合は createdAt/updatedAt ともに現在時刻を設定
-     * - 更新時は updatedAt のみ現在時刻に上書き
-     */
+    /** 新規作成または更新 */
     async save(entity: CompanyEntity): Promise<void> {
         const isNew = !entity.id;
         const id = isNew ? uuidv4() : entity.id;
         const now = new Date();
         const createdAt = isNew ? now : entity.createdAt;
 
+        // 共通フィールド
+        const baseValues = {
+            name:        entity.name,
+            industry:    entity.industry,
+            url:         entity.url,
+            appliedDate: entity.appliedDate,
+            status:      entity.status,
+            memo:        entity.memo,
+        };
+
         await db
             .insert(companies)
-            .values({
-                id,
-                name:         entity.name,
-                industry:     entity.industry,
-                appliedDate:  entity.appliedDate,
-                status:       entity.status,
-                memo:         entity.memo,
-                createdAt,
-                updatedAt:    now,
-            })
+            .values({ id, ...baseValues, createdAt, updatedAt: now })
             .onConflictDoUpdate({
                 target: companies.id,
-                set: {
-                    name:         entity.name,
-                    industry:     entity.industry,
-                    appliedDate:  entity.appliedDate,
-                    status:       entity.status,
-                    memo:         entity.memo,
-                    updatedAt:    now,
-                },
+                set: { ...baseValues, updatedAt: now },
             });
     }
 
     /** ID で削除 */
     async deleteById(id: string): Promise<void> {
-        await db
-            .delete(companies)
-            .where(eq(companies.id, id));
+        await db.delete(companies).where(eq(companies.id, id));
     }
 }
