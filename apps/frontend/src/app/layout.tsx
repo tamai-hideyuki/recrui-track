@@ -44,6 +44,18 @@ export default function RootLayout({
                     >
                         企業リスト
                     </Link>
+                    <Link
+                        href="/career"
+                        className="font-medium text-gray-300 hover:text-white transition-colors"
+                    >
+                        履歴書
+                    </Link>
+                    <Link
+                        href="/resumes"
+                        className="font-medium text-gray-300 hover:text-white transition-colors"
+                    >
+                        職務経歴書
+                    </Link>
                 </div>
                 <div>
                     <Link
