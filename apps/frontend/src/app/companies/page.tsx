@@ -29,7 +29,22 @@ export default function CompanyList() {
         "オファー面談",
         "辞退",
         "不採用",
-    ];
+    ] as const;
+
+    // ——— ピン留め状態管理 ———
+    // localStorage から復元
+    const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+        try {
+            return JSON.parse(localStorage.getItem("pinnedCompanies") || "[]");
+        } catch {
+            return [];
+        }
+    });
+
+    // pinnedIds 更新時に保存
+    useEffect(() => {
+        localStorage.setItem("pinnedCompanies", JSON.stringify(pinnedIds));
+    }, [pinnedIds]);
 
     // 初回データ取得
     useEffect(() => {
@@ -59,9 +74,17 @@ export default function CompanyList() {
         }
     };
 
-    // ソート済みデータを計算
+    // ピントグル関数
+    const togglePin = (id: string) => {
+        setPinnedIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+        );
+    };
+
+    // ソート済み＋ピン先頭
     const sorted = useMemo(() => {
-        return [...companies].sort((a, b) => {
+        // ① 既存のキー／昇降ソート
+        const base = [...companies].sort((a, b) => {
             const va = a[sortKey] ?? "";
             const vb = b[sortKey] ?? "";
 
@@ -74,8 +97,8 @@ export default function CompanyList() {
 
             // ステータス独自順
             if (sortKey === "status") {
-                const ia = statusOrder.indexOf(va as string);
-                const ib = statusOrder.indexOf(vb as string);
+                const ia = statusOrder.indexOf(va as typeof statusOrder[number]);
+                const ib = statusOrder.indexOf(vb as typeof statusOrder[number]);
                 return sortAsc ? ia - ib : ib - ia;
             }
 
@@ -84,7 +107,12 @@ export default function CompanyList() {
                 ? String(va).localeCompare(String(vb))
                 : String(vb).localeCompare(String(va));
         });
-    }, [companies, sortKey, sortAsc]);
+
+        // ② ピン済みを先頭に
+        const pinned = base.filter((c) => pinnedIds.includes(c.id));
+        const unpinned = base.filter((c) => !pinnedIds.includes(c.id));
+        return [...pinned, ...unpinned];
+    }, [companies, sortKey, sortAsc, pinnedIds]);
 
     // ローディング/エラー表示
     if (isLoading) {
@@ -160,7 +188,12 @@ export default function CompanyList() {
                     <tbody>
                     {sorted.length > 0 ? (
                         sorted.map((c) => (
-                            <tr key={c.id} className="hover:bg-gray-50">
+                            <tr
+                                key={c.id}
+                                className={`hover:bg-gray-50 ${
+                                    pinnedIds.includes(c.id) ? "bg-yellow-50" : ""
+                                }`}
+                            >
                                 {headers.map(({ key, isLink }) => {
                                     const val = c[key];
                                     // URL列はリンク
@@ -206,6 +239,12 @@ export default function CompanyList() {
                                         className="text-red-600 hover:underline disabled:opacity-50"
                                     >
                                         {deletingId === c.id ? "削除中…" : "削除"}
+                                    </button>
+                                    <button
+                                        onClick={() => togglePin(c.id)}
+                                        className="ml-2"
+                                    >
+                                        {pinnedIds.includes(c.id) ? "✅" : "☑️"}
                                     </button>
                                 </td>
                             </tr>
