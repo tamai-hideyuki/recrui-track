@@ -24,6 +24,7 @@ export default function CompanyList() {
         "一次選考",
         "二次選考",
         "三次選考",
+        "コーディングテスト",
         "最終面接",
         "内定",
         "オファー面談",
