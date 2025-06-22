@@ -13,8 +13,11 @@ services:
       - NEXT_PUBLIC_API_URL=/api
       - NODE_ENV=${NODE_ENV}
       - PORT=${FRONTEND_PORT}
-    expose:
-      - "${FRONTEND_PORT}"
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    command: ["npm","run","start","--","-p","${FRONTEND_PORT}"]
+    networks:
+      - recrui_net
 
   backend:
     build:
@@ -27,12 +30,14 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${BACKEND_PORT}
-    expose:
-      - "${BACKEND_PORT}"
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
+    command: [ "node", "dist/index.js", "--port", "${BACKEND_PORT}" ]
     volumes:
       - ../apps/backend/src/infrastructure/db/recrui-track.db:/app/recrui-track.db
+    networks:
+      - recrui_net
+
   nginx:
     image: nginx:stable-alpine
     container_name: "${NGINX_CONTAINER}"
@@ -44,3 +49,9 @@ services:
     depends_on:
       - frontend
       - backend
+    networks:
+      - recrui_net
+
+networks:
+  recrui_net:
+    driver: bridge
